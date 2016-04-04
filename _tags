@@ -1,0 +1,27 @@
+# OASIS_START
+# DO NOT EDIT (digest: 03bde709b6de81b7b807c94e96ab20d3)
+# Ignore VCS directories, you can use the same kind of rule outside
+# OASIS_START/STOP if you want to exclude directories that contains
+# useless stuff for the build process
+true: annot, bin_annot
+<**/.svn>: -traverse
+<**/.svn>: not_hygienic
+".bzr": -traverse
+".bzr": not_hygienic
+".hg": -traverse
+".hg": not_hygienic
+".git": -traverse
+".git": not_hygienic
+"_darcs": -traverse
+"_darcs": not_hygienic
+# Library tensority-light
+"src/tensority-light.cmxs": use_tensority-light
+<src/*.ml{,i,y}>: pkg_oceti
+# OASIS_STOP
+<src/tensor.ml>: package(ppx_listlike,ppx_indexop)
+<src/small_*.ml>: package(ppx_listlike,ppx_indexop)
+<src/slices.ml>: package(ppx_listlike,ppx_indexop)
+<src/small_*.mli>: package(ppx_indexop)
+<src/signatures.ml>: package(ppx_indexop)
+<src/shape.ml>:package(ppx_listlike)
+<src/hex_definitions.ml>:package(ppx_literals)
