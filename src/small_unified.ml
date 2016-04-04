@@ -81,20 +81,22 @@ type _ t =
   end
 
   [%%indexop.arraylike
-    let get: type a b. <contr:a; cov:b> t -> (a Shape.t * b Shape.t) -> float = fun t (contr,cov) ->
+    let get: type a b. <contr:a; cov:b> t -> (a Shape.l * b Shape.l) -> float = fun t (contr,cov) ->
       let open Shape in
       match%with_ll t, contr, cov with
       | Scalar f, [] , [] -> !f
-      | Vec v, [a], [] -> V.( v.(a) )
-      | Matrix m, [i], [j] -> M.( m.(i,j) )
+      | Vec v, [Elt a], [] -> V.( v.(a) )
+      | Matrix m, [Elt i], [Elt j] -> M.( m.(i,j) )
+      | _ -> assert false (* unreachable *)
 
-    and set: type a b. <contr:a; cov:b> t -> (a Shape.t * b Shape.t) -> float -> unit
+    and set: type a b. <contr:a; cov:b> t -> (a Shape.l * b Shape.l) -> float -> unit
       = fun t (contr,cov) x ->
         let open Shape in
         match%with_ll t, contr, cov with
         | Scalar f, [] , [] -> f := x
-        | Vec v, [a] ,  [] -> V.( v.(a) <- x )
-        | Matrix m, [i], [j] -> M.( m.(i,j) <- x )
+        | Vec v, [Elt a] ,  [] -> V.( v.(a) <- x )
+        | Matrix m, [Elt i], [Elt j] -> M.( m.(i,j) <- x )
+        | _ -> assert false
   ]
 
   [%%indexop

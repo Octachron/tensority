@@ -19,9 +19,9 @@ module Operators: sig
     <contr:'a; cov:'c> t
 end
 
-val get: <contr:'a; cov:'b> t -> ('a Shape.t * 'b Shape.t) -> float
+val get: <contr:'a; cov:'b> t -> ('a Shape.l * 'b Shape.l) -> float
   [@@indexop.arraylike]
-val set: <contr:'a; cov:'b> t -> ( 'a Shape.t * 'b Shape.t) -> float -> unit
+val set: <contr:'a; cov:'b> t -> ( 'a Shape.l * 'b Shape.l) -> float -> unit
   [@@indexop.arraylike]
 
 val get_1:

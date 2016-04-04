@@ -1,21 +1,20 @@
 open Range
 module H = Hexadecimal
 
-
 module A=Array
 
-type 'x t =  { contr:'a Shape.t;  cov:'b Shape.t;  array : float array }
+type 'x t =  { contr:'a Shape.l;  cov:'b Shape.l;  array : float array }
   constraint 'x = < contr:'a; cov:'b >
 
 [%%indexop.arraylike
-  let get: <contr:'a; cov:'b> t -> ('a Shape.t * 'b Shape.t) -> float = fun t (contr,cov) ->
+  let get: <contr:'a; cov:'b> t -> ('a Shape.l * 'b Shape.l ) -> float = fun t (contr,cov) ->
     let p = let open Shape in
      let c = position ~shape:t.cov ~indices:cov in
       position_gen ~shape:t.contr ~indices:contr ~final:c in
     A.unsafe_get t.array p
 
 
-  let set: < contr:'a; cov:'b > t -> ('a Shape.t * 'b Shape.t) -> float -> unit = fun t (contr,cov) value ->
+  let set: < contr:'a; cov:'b > t -> ('a Shape.l * 'b Shape.l ) -> float -> unit = fun t (contr,cov) value ->
     let p = let open Shape in
      let c = position ~shape:t.cov ~indices:cov in
       position_gen ~shape:t.contr ~indices:contr ~final:c in
@@ -51,7 +50,7 @@ let matrix dim_row dim_col f =
   let n_row = H.to_int dim_row in
   let n_col = H.to_int dim_col in
   let open Shape in
-    { cov= [%ll dim_col] ;contr=[%ll dim_row];
+    { cov= [%ll Elt dim_col] ;contr=[%ll Elt dim_row];
       array =
         A.init (n_row*n_col) (fun i -> f (i mod n_col) (i/n_col) )
     }
@@ -60,15 +59,15 @@ let sq_matrix dim f = matrix dim dim f
 
 let vector dim f =
   let open Shape in
-  { cov=[%ll];contr=[%ll dim]; array = A.init (H.to_int dim) f }
+  { cov=[%ll];contr=[%ll Elt dim]; array = A.init (H.to_int dim) f }
 
 
 module Index = struct
   open Shape
-let%with_ll _2 [nat] [_] r c =
+let%with_ll _2 ([Elt nat]: _ vector l) ([Elt _]: _ vector l) r c =
   H.( to_int r * to_int nat +  to_int c)
 
-let%with_ll _3 [nat1;nat2] [nat3] x y z =
+let%with_ll _3 ([Elt nat1; Elt nat2]:(_,_) matrix l) ([Elt nat3]: _ vector  l) x y z =
   H.( (to_int x * to_int nat2 + to_int y) * to_int nat3 +  to_int z)
 end
 
@@ -79,12 +78,11 @@ let get_1: < contr:'a Shape.vector; cov: Shape.scalar >  t -> 'a H.t -> float =
 let set_1: < contr: 'a Shape.vector; cov: Shape.scalar >  t -> 'a H.t -> float -> unit =
   fun t n -> A.unsafe_set t.array (H.to_int n)
 
-
 let get_2: < contr: 'a Shape.vector; cov: 'b Shape.vector >  t -> 'a H.t -> 'b H.t -> float =
   fun t r c ->
     A.unsafe_get t.array (Index._2 t.contr t.cov r c)
 
-let set_2: < contr:'a Shape.vector; cov: 'b Shape.vector > t -> 'a H.t -> 'b H.t -> float -> unit =
+let set_2: < contr:'a Shape.vector; cov: 'b Shape.vector> t -> 'a H.t -> 'b H.t -> float -> unit =
   fun t r c  ->
     A.unsafe_set t.array (Index._2 t.contr t.cov r c)
 
@@ -101,7 +99,6 @@ let set_3:
 ]
 
 ;;
-
 
 let delta i j = if i = j then 1. else 0.
 let id dim = sq_matrix dim delta
