@@ -38,13 +38,13 @@ let rec join: type li lm lo ni nm no.
   = fun slice1 slice2 ->
     match%with_ll slice1, slice2 with
   | [], [] -> []
-  | Take k :: slice1, _ -> Take k :: (join slice1 slice2)
+  | Elt k :: slice1, _ -> Elt k :: (join slice1 slice2)
   | All :: slice1, All::slice2 -> All :: (join slice1 slice2)
-  | All :: slice1, Take k :: slice2 -> (Take k) :: (join slice1 slice2)
+  | All :: slice1, Elt k :: slice2 -> (Elt k) :: (join slice1 slice2)
   | All :: slice1, Range r :: slice2 -> Range r :: (join slice1 slice2)
   | (Range _ as r) :: slice1, All::slice2 -> r :: (join slice1 slice2)
-  | Range r :: slice1, Take k :: slice2 ->
-    Take (Range.transpose r k) :: (join slice1 slice2)
+  | Range r :: slice1, Elt k :: slice2 ->
+    Elt (Range.transpose r k) :: (join slice1 slice2)
   | Range r :: slice1, Range r2 :: slice2 ->
     Range (Range.compose r r2) :: (join slice1 slice2)
   | [], _ :: _ -> assert false
@@ -75,7 +75,7 @@ let rec position_gen:
   | All :: filter , Elt dim :: shape, Elt nat :: indices  ->
     position_gen ~mult:(mult * H.to_int dim) ~sum:(sum + mult * H.to_int nat)
       filter shape indices
-  | Take nat :: filter, Elt dim :: shape, _ ->
+  | Elt nat :: filter, Elt dim :: shape, _ ->
     position_gen ~sum:(sum + mult * H.to_int nat)
       ~mult:(H.to_int dim * mult) filter shape indices
   | Range r :: filter, Elt dim :: shape, Elt nat :: indices ->

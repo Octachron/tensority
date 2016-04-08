@@ -143,9 +143,38 @@ let iter (f:'a t -> unit) (n:'a t) : unit =
     f @@ create i
   done
 
+let (|>?) x f = match x with Some x -> Some(f x) | None -> None
+let (||?) opt x = match opt with Some x -> x | None -> x
+
+let iter_partial  ~start ~(stop:'a t) (f:'a t -> unit): unit =
+  for i=start to (M.to_int stop - 1) do
+    f @@ create i
+  done
+
 let iter_on n f = iter f n
 
-let fold_i (f:'acc -> 'a t -> 'acc) acc (n:'a t) =
+let fold_nat (f:'acc -> 'a t -> 'acc) acc (n:'a t) =
   let acc = ref acc in
   iter (fun i -> acc := f !acc i) n;
   !acc
+
+
+let fold_nat_partial
+    ~start
+    ~(stop:'a t)
+    ~acc
+    (f:'acc -> 'a t -> 'acc)
+  =
+  let acc = ref acc in
+  iter_partial  ~start ~stop (fun i -> acc := f !acc i);
+  !acc
+
+let zero = create 0
+let succ nat = succ @@ M.to_int nat
+
+
+let if_inferior (n:int) (nat:'a M.t) (f:'a M.t -> 'b) (default:'b) =
+  if n < M.to_int nat then
+    f @@ create n
+  else
+    default

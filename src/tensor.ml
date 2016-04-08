@@ -1,6 +1,6 @@
 open Range
 module H = Hexadecimal
-
+module MA = Multidim_array
 module A=Array
 
 type 'x t =  { contr:'a Shape.l;  cov:'b Shape.l;  array : float array }
@@ -148,7 +148,7 @@ let full_contraction (t1: <contr:'a; cov:'b> t ) (t2: < contr:'b; cov:'a > t) = 
 let scalar_product (t1: 'sh t) (t2: 'sh t) = unsafe_contraction t1 t2
 
 
-
+module Operators = struct
 let ( |*| ) x y = scalar_product x y
 let ( + ) t1 t2 = map2 ( +. ) t1 t2
 let ( - ) t1 t2 = map2 ( -. ) t1 t2
@@ -160,7 +160,7 @@ let ( *. ) : float -> 'sh t -> 'sh t = fun m t1 ->
 let ( /. ) : float -> 'sh t -> 'sh t = fun m t1 ->
   let array = A.map ( fun x -> x /. m ) t1.array in
   { t1 with array }
-
+end
 
 (* to do:
    * moving indices up/down
@@ -179,3 +179,54 @@ let up1: type left right dim tl tl2.
   match%with_ll t.cov with
   | dim::right -> { t with contr = t.contr @ [dim] ; cov = right }
 *)
+
+let copy t = { t with array = A.copy t.array }
+
+exception Break
+
+let endo_dim (mat: <contr:'a Shape.vector; cov:'a Shape.vector> t) =
+  let open Shape in
+  match%with_ll mat.contr with
+  | [Elt dim] -> dim
+  | _ :: _ :: _ -> assert false
+
+let det ( mat : <contr:'a Shape.vector; cov:'a Shape.vector> t): float=
+  let abs = abs_float in
+  let open Shape in
+  let dim = endo_dim mat in
+  let mat = copy mat in
+  let sign = ref 1. in
+  let perm = MA.ordinal dim in
+  let ( ! ) k = MA.(  perm.{k} ) in
+  let swap i i' =
+    if i <> i' then
+      let tmp = !i in
+      let open MA in
+      perm.{i} <- !i'
+    ; perm.{i'} <- tmp
+    ; sign.contents<- -.sign.contents
+  in
+  let pivot j =
+    let find_max (i,max) k =
+      let abs_k = abs_float mat.{ !k, j } in
+      if abs_k > max then (k,abs_k) else (i,max) in
+    let start = H.succ j and acc = j, abs mat.{!j,j} in
+    let i, max  =
+      H.fold_nat_partial ~stop:dim ~start ~acc find_max in
+    if max > 0. then swap j i else raise Break in
+  let transl ?(start=0) ~from ~to_ coeff =
+    H.iter_partial ~start ~stop:dim (fun j ->
+        mat.{!to_,j} <- mat.{!to_,j} +. coeff *. mat.{!from,j}
+      )
+  in
+  try
+    H.iter_on dim (fun i ->
+    pivot i;
+    let c = mat.{!i,i} in
+    H.iter_partial ~start:(H.succ i) ~stop:dim
+      (fun to_ -> transl ~start:(H.to_int i) ~from:i ~to_ c)
+      )
+  ; H.fold_nat (fun p k -> p *. mat.{!k,k} ) sign.contents dim
+  with Break -> 0.
+
+include Operators

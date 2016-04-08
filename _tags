@@ -21,6 +21,7 @@ true: annot, bin_annot
 <src/tensor.ml>: package(ppx_listlike,ppx_indexop)
 <src/small_*.ml>: package(ppx_listlike,ppx_indexop)
 <src/slices.ml>: package(ppx_listlike,ppx_indexop)
+<src/multidim_array.ml>: package(ppx_listlike,ppx_indexop)
 <src/small_*.mli>: package(ppx_indexop)
 <src/signatures.ml>: package(ppx_indexop)
 <src/shape.ml>:package(ppx_listlike)

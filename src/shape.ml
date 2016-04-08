@@ -49,15 +49,23 @@ end
   end
 
 type empty = <n:N.z; list:nil>
+type empty_2 = <t_in:empty; t_out:empty>
 
 type _ elt =
   | Elt: 'nat H.t ->
-    (<x:<n:'n; list:'l>; fx:<n:'n N.succ; list: 'nat ->'l > >
-     * empty
-     * simple
-    ) elt
+    <x:
+       <
+         t_in: <n:'n;list:'l>;
+         t_out:<n:'n2;list:'l2>
+       >;
+     fx:
+       <
+         t_in: <n:'n N.succ;list:'nat -> 'l>;
+         t_out:<n:'n2;list: 'l2>
+       >;
+      > elt
   | All :
-      (<
+      <
         x:
           <
             t_in: <n:'n;list:'l>;
@@ -68,25 +76,9 @@ type _ elt =
             t_in: <n:'n N.succ;list:'any -> 'l>;
             t_out:<n:'n2 N.succ;list:'any -> 'l2>
           >
-      >
-      * < t_in:empty; t_out:empty>
-      * slice) elt
-  | Take: 'nat H.t ->
-    (<x:
-       <
-         t_in: <n:'n;list:'l>;
-         t_out:<n:'n2;list:'l2>
-       >;
-     fx:
-       <
-         t_in: <n:'n N.succ;list:'nat -> 'l>;
-         t_out:<n:'n2;list: 'l2>
-       >;
-      >
-      * < t_in:empty; t_out:empty>
-      * slice ) elt
+      >  elt
   | Range: ('in_,'out) Range.t ->
-        (<x:
+        <x:
        <
          t_in: <n:'n;list:'l>;
          t_out:<n:'n2;list:'l2>
@@ -97,20 +89,20 @@ type _ elt =
          t_out:<n:'n2 N.succ;list: 'out -> 'l2>
        >;
       >
-      * < t_in:empty; t_out:empty>
-      * slice ) elt
+      elt
 
 
   type _ t =
-  | Nil : ('nil * 'nil * 'any) t
-  | Cons : (<x:'x; fx:'fx> * 'nil * 'brand) elt * ('x * 'nil * 'brand) t
-    -> ('fx * 'nil * 'brand) t
+  | Nil : empty_2 t
+  | Cons : <x:'x; fx:'fx> elt * 'x t
+    -> 'fx t
 
-type 'a l = ('a*empty*simple) t
-type 'a s = ('a* <t_in:empty;t_out:empty> *slice) t
+type 'a l = <t_in:'a; t_out:empty> t
+type 'a s = 'a t
 
 type 'a vector = < n:N.z N.succ; list:'a -> nil >
 type ('a,'b) matrix = < n:N.z N.succ N.succ ; list:'a -> 'b ->  nil >
+type ('a,'b,'c) t3 = < n:N.z N.succ N.succ N.succ ; list:'a -> 'b -> 'c ->  nil >
 type scalar = < n: N.z; list:nil  >
 
 let rec order:type sh. sh t -> int = function%with_ll
@@ -120,6 +112,14 @@ let rec order:type sh. sh t -> int = function%with_ll
 let rec size: type sh. sh l -> int = function%with_ll
   | [] -> 1
   | (Elt nat)::sh -> (H.to_int nat) * (size sh)
+
+let rec free_size: type sh sh2. sh l -> <t_in:sh; t_out:sh2> s -> int = fun sh sl ->
+  match%with_ll sh,sl with
+  | [], [] -> 1
+  | Elt k :: q, Elt m :: sq -> free_size q sq
+  | Elt _ :: q, Range r :: sq -> (H.to_int @@ Range.len r) * free_size q sq
+  | Elt k :: q, All :: sq -> H.to_int k * free_size q sq
+  | [], _ -> assert false (* unreachable *)
 
 let rec position_gen: type sh. shape:(sh l as 'tt) -> indices:'tt -> final:int -> int = fun ~shape ~indices ~final ->
   match%with_ll shape , indices  with
