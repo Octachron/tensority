@@ -121,6 +121,15 @@ let rec free_size: type sh sh2. sh l -> <t_in:sh; t_out:sh2> s -> int = fun sh s
   | Elt k :: q, All :: sq -> H.to_int k * free_size q sq
   | [], _ -> assert false (* unreachable *)
 
+let rec filter: type sh sh2. sh l -> <t_in:sh; t_out:sh2> s -> sh2 l = fun sh sl ->
+  match%with_ll sh,sl with
+  | [], [] -> []
+  | Elt k :: q, Elt m :: sq -> filter q sq
+  | Elt _ :: q, Range r :: sq -> Elt (Range.len r) :: filter q sq
+  | Elt k :: q, All :: sq -> Elt k ::  filter q sq
+  | [], _ -> assert false (* unreachable *)
+
+
 (** Note: fortran layout *)
 let rec position_gen: type sh. shape:(sh l as 'tt) -> indices:'tt -> final:int -> int = fun ~shape ~indices ~final ->
   match%with_ll shape , indices  with
