@@ -13,7 +13,7 @@ val pad_right: 'a H.t -> float array -> 'a t
 
 val get : 'a t -> 'a H.t -> float
 val set : 'a t -> 'a H.t -> float -> unit
-val dim : 'a array -> int
+val dim : 'a t -> int
 val typed_dim : 'a t -> 'a H.t
 
 val map_nat: ('a H.t -> float -> float) -> 'a t -> 'a t
