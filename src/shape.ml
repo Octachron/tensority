@@ -121,6 +121,7 @@ let rec free_size: type sh sh2. sh l -> <t_in:sh; t_out:sh2> s -> int = fun sh s
   | Elt k :: q, All :: sq -> H.to_int k * free_size q sq
   | [], _ -> assert false (* unreachable *)
 
+(** Note: fortran layout *)
 let rec position_gen: type sh. shape:(sh l as 'tt) -> indices:'tt -> final:int -> int = fun ~shape ~indices ~final ->
   match%with_ll shape , indices  with
   | Elt dim::shape, Elt i::indices -> H.to_int i + H.to_int dim * position_gen ~shape ~indices ~final
@@ -128,3 +129,54 @@ let rec position_gen: type sh. shape:(sh l as 'tt) -> indices:'tt -> final:int -
   | _ -> assert false (* unreachable *)
 
 let position ~shape ~indices = position_gen  ~shape ~indices ~final:0
+
+let rec iter: type sh. (sh l -> unit) -> sh l -> unit = fun f sh ->
+  match%with_ll sh with
+  | [] -> ()
+  | Elt a :: sh ->
+    H.iter_on a ( fun nat ->
+        iter (fun sh -> f (Elt a :: sh) ) sh
+      )
+
+let iter_on shape f = iter f shape
+
+let rec iter_extended_dual: type sh sh'.
+  (sh l -> sh' l -> unit ) -> sh l -> <t_in:sh'; t_out:sh> s -> unit=
+  fun f sh mask ->
+    match%with_ll mask, sh with
+    | [], [] -> ()
+    | Elt a :: mask, _ ->
+      iter_extended_dual (fun sh sh' -> f sh (Elt a :: sh') ) sh mask
+    | All :: mask, Elt a :: sh ->
+      H.iter_on a (fun nat ->
+          let f sh sh' =  f (Elt nat::sh) (Elt nat::sh') in
+          iter_extended_dual f sh mask
+        )
+    | Range r :: mask, Elt a :: sh ->
+      H.iter_on a (fun nat ->
+          let f sh sh' =
+            f (Elt nat::sh) (Elt (Range.transpose r nat)::sh') in
+          iter_extended_dual f sh mask
+        )
+    | [], _ :: _ -> assert false (* unreachable *)
+
+
+let rec iter_masked_dual: type sh sh'.
+  (sh l -> sh' l -> unit ) -> sh l -> <t_in:sh; t_out:sh'> s -> unit=
+  fun f sh mask ->
+    match%with_ll mask, sh with
+    | [], [] -> ()
+    | Elt a :: mask, Elt _ :: sh ->
+      iter_masked_dual (fun sh sh' -> f (Elt a :: sh) sh' ) sh mask
+    | All :: mask, Elt a :: sh ->
+      H.iter_on a (fun nat ->
+          let f sh sh' =  f (Elt nat::sh) (Elt nat::sh') in
+          iter_masked_dual f sh mask
+        )
+    | Range r :: mask, Elt a :: sh ->
+      H.iter_on (Range.len r) (fun nat ->
+          let f sh sh' =
+            f (Elt (Range.transpose r nat)::sh) (Elt nat ::sh') in
+          iter_masked_dual f sh mask
+        )
+    | [], _ :: _ -> assert false (* unreachable *)
