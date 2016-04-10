@@ -9,6 +9,8 @@ let (@?) a n = A.unsafe_get a n
 type 'x t = { shape: 'sh Shape.l; array: 'elt array }
   constraint 'x = <shape:'sh; elt:'elt>
 
+let size m = Shape.size m.shape
+
 [%%indexop.arraylike
   let get: <shape:'sh; elt:'elt> t -> 'sh Shape.l -> 'elt = fun t indices ->
     let p =
@@ -61,7 +63,7 @@ type 'x t = { shape: 'sh Shape.l; array: 'elt array }
 let len t = A.length t.array
 let shape t = t.shape
 
-let create_unsafe shape array =
+let unsafe_create shape array =
   let len =  A.length array and size = Shape.size shape in
   if len <> size  then
     raise @@ Dimension_error("Multidim_array.create_unsafe", size, len)
@@ -101,3 +103,12 @@ let partial_blit: from:'sh t -> to_:'sh2 t -> <t_in:'sh; t_out:'sh2> Shape.s
 
 let%indexop.stringlike get m n = partial_copy ~deep_copy:(fun x -> x) m n
 and set to_ filter from = partial_blit ~from ~to_ filter
+
+(** Unsafe *)
+let reshape: <shape:'sh; elt:'elt> t -> 'sh2 Shape.l -> <shape:'sh2; elt:'elt> t =
+  fun m sh2 ->
+  let s = size m and s2 = Shape.size sh2 in
+  if size m <> Shape.size sh2 then
+    raise @@ Dimension_error ("Multidim_array.reshape", s, s2)
+  else
+    { m with shape = sh2 }
