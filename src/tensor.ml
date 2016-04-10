@@ -51,6 +51,7 @@ let create cov contr const=
   let len = (Shape.size cov) * (Shape.size contr) in
   {cov;contr; array=A.make len 0. }
 
+let zero cov contr = create cov contr 0.
 
 let reshape t (contr,cov) =
   let l = len t and dim = Shape.(size contr * size cov) in
@@ -103,26 +104,25 @@ let%with_ll _3 ([Elt nat1; Elt nat2]:(_,_) matrix l) ([Elt nat3]: _ vector  l) x
 end
 
 ;; [%%indexop
-let get_1: < contr:'a Shape.vector; cov: Shape.scalar >  t -> 'a H.t -> float =
+let get_1: 'a vec -> 'a H.t -> float =
   fun t n -> t.array @? H.to_int n
 
-let set_1: < contr: 'a Shape.vector; cov: Shape.scalar >  t -> 'a H.t -> float -> unit =
+let set_1: 'a vec -> 'a H.t -> float -> unit =
   fun t n -> t.array % H.to_int n
 
-let get_2: < contr: 'a Shape.vector; cov: 'b Shape.vector >  t -> 'a H.t -> 'b H.t -> float =
+let get_2: ('a,'b) matrix -> 'a H.t -> 'b H.t -> float =
   fun t r c ->
     t.array @? Index._2 t.contr t.cov r c
 
-let set_2: < contr:'a Shape.vector; cov: 'b Shape.vector> t -> 'a H.t -> 'b H.t -> float -> unit =
+let set_2: ('a,'b) matrix -> 'a H.t -> 'b H.t -> float -> unit =
   fun t r c  ->
     t.array % Index._2 t.contr t.cov r c
 
-let get_3:
-  < contr:('a,'b) Shape.matrix; cov: 'c Shape.vector >  t -> 'a H.t -> 'b H.t -> 'c H.t -> float = fun t x y z ->
+let get_3: ('a,'b,'c) t3 -> 'a H.t -> 'b H.t -> 'c H.t -> float = fun t x y z ->
     t.array @? Index._3 t.contr t.cov x y z
 
 let set_3:
-  < contr: ('a,'b) Shape.matrix; cov: 'c Shape.vector >  t
+  ('a,'b,'c) t3
   -> 'a H.t -> 'b H.t -> 'c H.t
   -> float
   -> unit = fun t x y z ->
@@ -138,14 +138,14 @@ let base dim p =
   let Truth = p %<% dim in
   vector dim @@ delta p
 
-
-let transpose: < contr:'left; cov:'right > t -> < contr:'right; cov:'left > t = fun t1 ->
+let transpose: < contr:'left; cov:'right > t -> < contr:'right; cov:'left > t =
+  fun t1 ->
   let left =  contr_size t1
   and right = cov_size t1 in
   let array = A.make (len t1) 0. in
   let () =
     iter_on (range left ^ range right) (fun i j ->
-        A.unsafe_set t1.array (i * right + j ) @@ A.unsafe_get t1.array (j * right + i)
+        t1.array % (i * right + j ) =: t1.array @? (j * right + i)
       ) in
   { array; contr = t1.cov; cov = t1.contr }
 
@@ -212,14 +212,15 @@ let up1: type left right dim tl tl2.
 *)
 
 let copy t = { t with array = A.copy t.array }
-let partial_copy t1 (filter1,filter2) t2 =
+let partial_copy t (f1,f2) =
+  let tnew = zero (Shape.filter f1 t.contr) (Shape.filter f2 t.cov) in
   Shape.iter_masked_dual
     (fun sh2 sh2' ->
        Shape.iter_masked_dual (
          fun sh1 sh1' ->
-           t1.(sh1,sh2) <- t2.(sh1',sh2')
-       ) t1.cov filter2
-    ) t1.contr filter1
+           tnew.(sh1,sh2) <- t.(sh1',sh2')
+       ) t.contr f1
+    )  t.cov f2
 
 let blit t t2 =
   Shape.iter ( fun sh' ->
@@ -236,9 +237,12 @@ let partial_blit t (f1,f2) t2 =
     ) t.cov f2
 
 
+let%indexop.stringlike get = partial_copy
+and set = partial_blit
+
 exception Break
 
-let endo_dim (mat: <contr:'a Shape.vector; cov:'a Shape.vector> t) =
+let endo_dim (mat: ('a,'a) matrix) =
   let open Shape in
   match%with_ll mat.contr with
   | [Elt dim] -> dim
