@@ -51,6 +51,14 @@ let create cov contr const=
   let len = (Shape.size cov) * (Shape.size contr) in
   {cov;contr; array=A.make len 0. }
 
+
+let reshape t (contr,cov) =
+  let l = len t and dim = Shape.(size contr * size cov) in
+  if l <> dim then
+    raise @@ Signatures.Dimension_error("Tensor.reshape", l, dim)
+  else
+    { t with contr; cov }
+
 let map2 ( <@> ) (t1:'sh t) (t2:'sh t) : 'sh t =
   let array = A.mapi ( fun i x -> x <@> t2.array @? i ) t1.array in
   { t1 with array }
@@ -204,6 +212,29 @@ let up1: type left right dim tl tl2.
 *)
 
 let copy t = { t with array = A.copy t.array }
+let partial_copy t1 (filter1,filter2) t2 =
+  Shape.iter_masked_dual
+    (fun sh2 sh2' ->
+       Shape.iter_masked_dual (
+         fun sh1 sh1' ->
+           t1.(sh1,sh2) <- t2.(sh1',sh2')
+       ) t1.cov filter2
+    ) t1.contr filter1
+
+let blit t t2 =
+  Shape.iter ( fun sh' ->
+      Shape.iter ( fun sh ->
+          t.(sh,sh')<- t2.(sh,sh')
+        ) t.contr
+    ) t.cov
+
+let partial_blit t (f1,f2) t2 =
+  Shape.iter_masked_dual ( fun sh2 sh2' ->
+      Shape.iter_masked_dual ( fun sh sh' ->
+          t.(sh,sh2) <- t2.(sh',sh2')
+        ) t.contr f1
+    ) t.cov f2
+
 
 exception Break
 
@@ -252,9 +283,9 @@ let det ( mat : <contr:'a Shape.vector; cov:'a Shape.vector> t): float=
   ; H.fold_nat (fun p k -> p *. mat.{!k,k} ) sign.contents dim
   with Break -> 0.
 
-(** Given (n-1) vectors of dimension n, compute the normal to the hyperplan
-    defined by these vectors with norm equal to the (n-1)-volume of these
-    vectors; sometimes mistakenly called vector or cross product in dimension 3.
+(** Given (n-1) vectors of dimension n, compute the normal to the hyperplane
+    defined by these vectors with norm equal to their (n-1)-volume;
+    sometimes mistakenly called vector or cross product in dimension 3.
     * raise Invalid_argument if array = [||]
     * raise dimension_error if array lenght and vector dimension disagrees
 *)
@@ -268,13 +299,12 @@ let normal (array: 'dim vec array): 'dim vec =
   let open Hex_definitions in
   let ( %+% ) = H.certified_adder Dyn.dim _1 dim in
   let minor k = det @@ sq_matrix Dyn.dim (fun i j ->
-      let pos =
-        i %+%
-        if H.( to_int i < to_int k) then _0p else _1p
-      in
-      (array @? H.to_int j).{pos}
+      let offset =
+        if H.( to_int i < to_int k) then _0p else _1p in
+      (array @? H.to_int j).{i %+% offset}
     )
   in
   vector dim minor
+
 
 include Operators
