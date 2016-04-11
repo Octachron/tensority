@@ -41,29 +41,7 @@ module Basis = struct
   let _F = S _E
 end  
 
-
-module Indices = struct
-  type bottom
-  let make n = 16, create n
-  let _Fn : int * bottom t = make 15
-  let _En : int * [< `_F ] t = make 14
-  let _Dn : int * [< `_E | `_F ] t = make 13
-  let _Cn : int * [< `_D | `_E |`_F ] t = make 12
-  let _Bn : int * [< `_C | `_D |  `_E | `_F ] t = make 11    
-  let _An : int * [< `_B | `_C | `_D |  `_E | `_F ] t = make 10   
-  let _9n : int * [< `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 9
-  let _8n : int * [< `_9 | `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 8
-  let _7n : int * [< `_8 | `_9 | `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 7
-  let _6n : int * [< `_7 |`_8 | `_9 | `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 6
-  let _5n : int * [< `_6 | `_7 |`_8 | `_9 | `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 5
-  let _4n : int * [< `_5 | `_6 | `_7 |`_8 | `_9 | `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 4
-  let _3n : int * [< `_4 | `_5 | `_6 | `_7 |`_8 | `_9 | `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 3
-  let _2n : int * [< `_3 | `_4 | `_5 | `_6 | `_7 |`_8 | `_9 | `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 2
-  let _1n : int * [< `_2 |  `_3 | `_4 | `_5 | `_6 | `_7 |`_8 | `_9 | `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 1
-  let _0n : int * [< `_1 |  `_2 |  `_3 | `_4 | `_5 | `_6 | `_7 |`_8 | `_9 | `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 0
-
-  
-  
+module Shifter = struct
   let shift k (d,x) = d lsl 4, create (k*d + M.to_int x)
 
   let _F : int * 'a t -> int * [< `_F of 'a ]  t = fun x -> shift 15 x
@@ -81,10 +59,42 @@ module Indices = struct
   let _3 : int * 'a t -> int * [< `_3 of 'a | `_4 of 'any | `_5 of 'any | `_6 of 'any | `_7 of 'any |`_8 of 'any | `_9 of 'any | `_A of 'any | `_B of 'any | `_C of 'any | `_D of 'any |  `_E of 'any | `_F of 'any ] t = fun x -> shift 3 x
   let _2 : int * 'a t -> int * [< `_2 of 'a | `_3 of 'any | `_4 of 'any | `_5 of 'any | `_6 of 'any | `_7 of 'any |`_8 of 'any | `_9 of 'any | `_A of 'any | `_B of 'any | `_C of 'any | `_D of 'any |  `_E of 'any | `_F of 'any ] t = fun x -> shift 2 x
   let _1 : int * 'a t -> int * [< `_1 of 'a | `_2 of 'any |  `_3 of 'any | `_4 of 'any | `_5 of 'any | `_6 of 'any | `_7 of 'any |`_8 of 'any | `_9 of 'any | `_A of 'any | `_B of 'any | `_C of 'any | `_D of 'any |  `_E of 'any | `_F of 'any ] t = fun x -> shift 1 x
-  let _0 : int * 'a t -> int * [< `_0 of 'a | `_1 of 'any |  `_2 of 'any |  `_3 of 'any | `_4 of 'any | `_5 of 'any | `_6 of 'any | `_7 of 'any |`_8 of 'any | `_9 of 'any | `_A of 'any | `_B of 'any | `_C of 'any | `_D of 'any |  `_E of 'any | `_F of 'any ] t = fun x -> shift 0 x
+
+
+  let _0 : int * 'a t -> int *
+                         [< `_0 of 'a | `_1 of 'any |  `_2 of 'any |  `_3 of 'any
+                         | `_4 of 'any | `_5 of 'any | `_6 of 'any | `_7 of 'any
+                         |`_8 of 'any | `_9 of 'any | `_A of 'any | `_B of 'any
+                         | `_C of 'any | `_D of 'any |  `_E of 'any | `_F of 'any ]
+                           t
+    = fun x -> shift 0 x
 
   let close = snd
   let (@) f x = f x
+end
+
+
+module Indices = struct
+  type bottom
+  let make n = 16, create n
+  let _Fn : int * bottom t = make 15
+  let _En : int * [< `_F ] t = make 14
+  let _Dn : int * [< `_E | `_F ] t = make 13
+  let _Cn : int * [< `_D | `_E |`_F ] t = make 12
+  let _Bn : int * [< `_C | `_D |  `_E | `_F ] t = make 11
+  let _An : int * [< `_B | `_C | `_D |  `_E | `_F ] t = make 10
+  let _9n : int * [< `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 9
+  let _8n : int * [< `_9 | `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 8
+  let _7n : int * [< `_8 | `_9 | `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 7
+  let _6n : int * [< `_7 |`_8 | `_9 | `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 6
+  let _5n : int * [< `_6 | `_7 |`_8 | `_9 | `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 5
+  let _4n : int * [< `_5 | `_6 | `_7 |`_8 | `_9 | `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 4
+  let _3n : int * [< `_4 | `_5 | `_6 | `_7 |`_8 | `_9 | `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 3
+  let _2n : int * [< `_3 | `_4 | `_5 | `_6 | `_7 |`_8 | `_9 | `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 2
+  let _1n : int * [< `_2 |  `_3 | `_4 | `_5 | `_6 | `_7 |`_8 | `_9 | `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 1
+  let _0n : int * [< `_1 |  `_2 |  `_3 | `_4 | `_5 | `_6 | `_7 |`_8 | `_9 | `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 0
+
+  include Shifter
 end
 
 
@@ -160,80 +170,7 @@ module Adder = struct
   let _0n : int * [< `_0 | `_1 |  `_2 |  `_3 | `_4 | `_5 | `_6
                   | `_7 |`_8 | `_9 | `_A | `_B | `_C | `_D |  `_E | `_F ] t = make 0
 
-  let shift k (d,x) = d lsl 4, create (k*d + M.to_int x)
-
-  let _F : int * 'a t -> int * [< `_F of 'a ]  t = fun x -> shift 15 x
-  let _E : int * 'a t -> int * [< `_E of 'a | `_F of 'any ] t = fun x -> shift 14 x
-  let _D : int * 'a t -> int * [< `_D of 'a |  `_F of 'any ] t = fun x -> shift 13 x
-  let _C : int * 'a t -> int *
-                         [< `_C of 'a | `_D of 'any | `_E of 'any |`_F of 'any ] t
-    = fun x -> shift 12 x
-  let _B : int * 'a t -> int *
-                         [< `_B of 'a | `_C of 'any | `_D of 'any |  `_E of 'any
-                         | `_F of 'any ] t =
-    fun x -> shift 11 x
-  let _A : int * 'a t -> int *
-                         [< `_A of 'a | `_B of 'any | `_C of 'any | `_D of 'any
-                         | `_E of 'any | `_F of 'any ] t =
-    fun x -> shift 10 x
-  let _9 : int * 'a t -> int * [< `_9 of 'a | `_A of 'any | `_B of 'any
-                               | `_C of 'any | `_D of 'any |  `_E of 'any
-                               | `_F of 'any ] t =
-    fun x -> shift 9 x
-  let _8 : int * 'a t -> int *
-                         [< `_8 of 'a | `_9 of 'any | `_A of 'any | `_B of 'any
-                         | `_C of 'any | `_D of 'any |  `_E of 'any
-                         | `_F of 'any ] t =
-    fun x -> shift 8 x
-  let _7 : int * 'a t -> int *
-                         [< `_7 of 'a | `_8 of 'any | `_9 of 'any | `_A of 'any
-                         | `_B of 'any | `_C of 'any | `_D of 'any |  `_E of 'any
-                         | `_F of 'any ] t =
-    fun x -> shift 7 x
-  let _6 : int * 'a t -> int *
-                         [< `_6 of 'a | `_7 of 'any |`_8 of 'any | `_9 of 'any
-                         | `_A of 'any | `_B of 'any | `_C of 'any | `_D of 'any
-                         | `_E of 'any | `_F of 'any ] t =
-    fun x -> shift 6 x
-  let _5 : int * 'a t -> int *
-                         [< `_5 of 'a | `_6 of 'any | `_7 of 'any |`_8 of 'any
-                         | `_9 of 'any | `_A of 'any | `_B of 'any | `_C of 'any
-                         | `_D of 'any |  `_E of 'any | `_F of 'any ] t =
-    fun x -> shift 5 x
-  let _4 : int * 'a t -> int *
-                         [< `_4 of 'a | `_5 of 'any | `_6 of 'any | `_7 of 'any
-                         |`_8 of 'any | `_9 of 'any | `_A of 'any | `_B of 'any
-                         | `_C of 'any | `_D of 'any |  `_E of 'any
-                         | `_F of 'any ] t =
-    fun x -> shift 4 x
-  let _3 : int * 'a t -> int *
-                         [< `_3 of 'a | `_4 of 'any | `_5 of 'any
-                         | `_6 of 'any | `_7 of 'any |`_8 of 'any | `_9 of 'any
-                         | `_A of 'any | `_B of 'any | `_C of 'any | `_D of 'any
-                         |  `_E of 'any | `_F of 'any ] t =
-    fun x -> shift 3 x
-  let _2 : int * 'a t -> int *
-                         [< `_2 of 'a | `_3 of 'any | `_4 of 'any | `_5 of 'any
-                         | `_6 of 'any | `_7 of 'any |`_8 of 'any | `_9 of 'any
-                         | `_A of 'any | `_B of 'any | `_C of 'any | `_D of 'any
-                         |  `_E of 'any | `_F of 'any ] t =
-    fun x -> shift 2 x
-  let _1 : int * 'a t -> int *
-                         [< `_1 of 'a | `_2 of 'any |  `_3 of 'any | `_4 of 'any
-                         | `_5 of 'any | `_6 of 'any | `_7 of 'any |`_8 of 'any
-                         | `_9 of 'any | `_A of 'any | `_B of 'any | `_C of 'any
-                         | `_D of 'any |  `_E of 'any | `_F of 'any ] t =
-    fun x -> shift 1 x
-  let _0 : int * 'a t -> int *
-                         [< `_0 of 'a | `_1 of 'any |  `_2 of 'any |  `_3 of 'any
-                         | `_4 of 'any | `_5 of 'any | `_6 of 'any | `_7 of 'any
-                         | `_8 of 'any | `_9 of 'any | `_A of 'any | `_B of 'any
-                         | `_C of 'any | `_D of 'any |  `_E of 'any
-                         | `_F of 'any ] t =
-    fun x -> shift 0 x
-
-  let close = snd
-  let (@) f x = f x
+  include Shifter
 end
 
 
