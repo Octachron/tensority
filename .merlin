@@ -1,3 +1,5 @@
 S src/**
 B _build/**
+S examples/*
 PKG ppx_listlike ppx_indexop ppx_literals oceti
+FLG -warn "a"

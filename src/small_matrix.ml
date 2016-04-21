@@ -7,20 +7,20 @@ let (@?) a n = A.unsafe_get a n
 let ( % ) a n x = A.unsafe_set a n x
 let ( =: ) = (@@)
 
-type 'a t = {lines: 'b H.t; array:float array}
+type 'a t = {lines: 'b Nat.eq; array:float array}
   constraint 'a = 'b * 'c
 
-let unsafe_create (lines:'a H.t) (rows: 'b H.t) array: ('a * 'b) t =
+let unsafe_create (lines:'a Nat.eq) (rows: 'b Nat.eq) array: ('a * 'b) t =
   { lines; array}
 
 let create l r a =
-  if H.to_int l * H.to_int r = A.length a then
+  if Nat.to_int l * Nat.to_int r = A.length a then
     unsafe_create l r a
   else
-    raise @@ Dimension_error("Matric.create",H.to_int l * H.to_int r, A.length a)
+    raise @@ Dimension_error("Matric.create",Nat.to_int l * Nat.to_int r, A.length a)
 
-let init lines (rows:' b H.t) f : ('a * 'b) t =
-  let nl = H.to_int lines and nr = H.to_int rows in
+let init lines (rows:' b Nat.eq) f : ('a * 'b) t =
+  let nl = Nat.to_int lines and nr = Nat.to_int rows in
   let array = A.make_float (nl * nr ) in
   let pos = ref 0 in
   for j = 0 to nr - 1 do
@@ -32,18 +32,18 @@ let init lines (rows:' b H.t) f : ('a * 'b) t =
 
 let square dim f = f dim dim
 
-let get (mat:('a * 'b) t) (i:'a H.t) (j:'b H.t)=
-  Array.unsafe_get mat.array (H.to_int j * H.to_int mat.lines + H.to_int i)
+let get (mat:('a * 'b) t) (i:'a Nat.lt) (j:'b Nat.lt)=
+  Array.unsafe_get mat.array (Nat.to_int j * Nat.to_int mat.lines + Nat.to_int i)
 
-let set (mat:('a * 'b) t) (i:'a H.t) (j:'b H.t) x =
-  Array.unsafe_set mat.array (H.to_int j * H.to_int mat.lines + H.to_int i) x
+let set (mat:('a * 'b) t) (i:'a Nat.lt) (j:'b Nat.lt) x =
+  Array.unsafe_set mat.array (Nat.to_int j * Nat.to_int mat.lines + Nat.to_int i) x
 
-let dims mat = let l = H.to_int mat.lines in
+let dims mat = let l = Nat.to_int mat.lines in
   l, Array.length mat.array / l
 
-let typed_dims (mat:('a * 'b) t) : 'a H.t * 'b H.t =
+let typed_dims (mat:('a * 'b) t) : 'a Nat.eq * 'b Nat.eq =
   let l, r = dims mat in
-  H.create l, H.create r
+  Nat.create l, Nat.create r
 
 let size mat = Array.length mat.array
 
@@ -60,20 +60,20 @@ let fold_2 f acc (m:' a t) (n:'a t) =
   done;
   !acc
 
-let base ~(dim_l:'a H.t) ~i ~(dim_r:'b H.t) ~j : ('a * 'b) t =
-  let open H in
+let base ~(dim_l:'a Nat.eq) ~i ~(dim_r:'b Nat.eq) ~j : ('a * 'b) t =
+  let open Nat in
   let Truth = i %<% dim_l
   and Truth = j %<% dim_r in
   let array = Array.make (to_int dim_l * to_int dim_r) 0. in
   array.( to_int i * to_int dim_l  + to_int j) <- 0.;
   {lines = dim_l; array }
 
-let zero l r = create l r @@ Array.make (H.to_int l* H.to_int r) 0.
+let zero l r = create l r @@ Array.make (Nat.to_int l* Nat.to_int r) 0.
 let diag v =
   let dim = Small_vec.typed_dim v in
-  let n = H.to_int dim in
+  let n = Nat.to_int dim in
   let a = Array.make (n * n) 0. in
-  H.iter_on dim ( fun k -> a % (H.to_int k * n) =: (Small_vec.get v k) );
+  Nat.iter_on dim ( fun k -> a % (Nat.to_int k * n) =: (Small_vec.get v k) );
   create dim dim a
 
 let id dim = square dim init delta
@@ -81,7 +81,7 @@ let id dim = square dim init delta
 let transpose (mat:('a *' b) t) : ('b * 'a ) t =
   let array = Array.make_float (size mat) in
   let l, r = dims mat in
-  let lines = H.create @@ r in
+  let lines = Nat.create @@ r in
   let dir = ref 0 and tr = ref 0 in
   for j = 0 to r - 1 do
     tr := j;
@@ -99,10 +99,10 @@ module Operators = struct
 
     (** matrix application: fortran layout *)
     let (@) (m: ('a * 'b) t) (v:'b Small_vec.t) : 'a Small_vec.t =
-      let l = H.to_int m.lines in
+      let l = Nat.to_int m.lines in
       let array = Array.make l 0. in
       let pos = ref 0 in
-      H.iter_on (Small_vec.typed_dim v) (fun k ->
+      Nat.iter_on (Small_vec.typed_dim v) (fun k ->
         for i = 0 to l - 1 do
           array % i =: (array @? i) +. m.array.(!pos) *. Small_vec.(v.(k));
           incr pos
@@ -115,9 +115,9 @@ module Operators = struct
       let l, c = typed_dims n in
       init m.lines c (fun i j ->
           let sum = ref 0. in
-          let off = j * H.to_int m.lines in
+          let off = j * Nat.to_int m.lines in
           let off_n = ref i in
-          let n_k = H.to_int l in
+          let n_k = Nat.to_int l in
           for k = 0 to n_k - 1 do
             sum := !sum +.
                    (m.array @? !off_n )

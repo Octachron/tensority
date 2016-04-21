@@ -1,17 +1,16 @@
-module H = Hexadecimal
 
 type 'a t constraint 'a = 'b * 'c
 
-val unsafe_create : 'a H.t -> 'b H.t -> float array -> ('a * 'b) t
-val create : 'a H.t -> 'b H.t -> float array -> ('a * 'b) t
-val init : 'a H.t -> 'b H.t -> (int -> int -> float) -> ('a * 'b) t
+val unsafe_create : 'a Nat.eq -> 'b Nat.eq -> float array -> ('a * 'b) t
+val create : 'a Nat.eq -> 'b Nat.eq -> float array -> ('a * 'b) t
+val init : 'a Nat.eq -> 'b Nat.eq -> (int -> int -> float) -> ('a * 'b) t
 val square : 'a -> ('a -> 'a -> 'b) -> 'b
 
-val get : ('a * 'b) t -> 'a H.t -> 'b H.t -> float
-val set : ('a * 'b) t -> 'a H.t -> 'b H.t -> float -> unit
+val get : ('a * 'b) t -> 'a Nat.lt -> 'b Nat.lt -> float
+val set : ('a * 'b) t -> 'a Nat.lt -> 'b Nat.lt -> float -> unit
 
 val dims : ('a * 'b) t -> int * int
-val typed_dims : ('a * 'b) t -> 'a H.t * 'b H.t
+val typed_dims : ('a * 'b) t -> 'a Nat.eq * 'b Nat.eq
 val size : ('a * 'b) t -> int
 
 val map: (float -> float) -> 'a t -> 'a t
@@ -22,9 +21,9 @@ val fold_2 :
       'a -> ('b * 'c) t -> ('b * 'c) t -> 'a
 
 val base :
-  dim_l:'a H.t -> i:'a H.t -> dim_r:'b H.t -> j:'b H.t -> ('a * 'b) t
-val zero: 'a H.t -> 'b H.t -> ('a*'b) t
-val id : 'a H.t -> ('a * 'a) t
+  dim_l:'a Nat.eq -> i:'a Nat.lt -> dim_r:'b Nat.eq -> j:'b Nat.lt -> ('a * 'b) t
+val zero: 'a Nat.eq -> 'b Nat.eq -> ('a*'b) t
+val id : 'a Nat.eq -> ('a * 'a) t
 val diag: 'a Small_vec.t -> ('a * 'a ) t
 val transpose : ('a * 'b) t -> ('b * 'a) t
 

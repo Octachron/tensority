@@ -1,51 +1,51 @@
-module H = Hexadecimal
+
 open Signatures
 open Tensority_misc
 module A = Array
 
 type +'a t = float array
 
-let unsafe_create (_nat:'a H.t) (array: float array) : 'a t =
+let unsafe_create (_nat:'a Nat.eq) (array: float array) : 'a t =
   array
 
 let create nat array =
-  if H.to_int nat <> A.length array then
-    raise @@  Dimension_error( "Vec.create", H.to_int nat, A.length array)
+  if Nat.to_int nat <> A.length array then
+    raise @@  Dimension_error( "Vec.create", Nat.to_int nat, A.length array)
   else
     unsafe_create nat array
 
-let init (nat:'a H.t) f : 'a t =
-  unsafe_create nat @@ A.init (H.to_int nat) f
+let init (nat:'a Nat.eq) f : 'a t =
+  unsafe_create nat @@ A.init (Nat.to_int nat) f
 
 let const nat c =
-  Array.make (H.to_int nat) c
+  Array.make (Nat.to_int nat) c
 
 let zero nat = const nat 0.
 
 let pad_right nat array =
   let n = Array.length array in
-  if n <> H.to_int nat then
-    raise @@ Dimension_error("Vec.pad_left",n, H.to_int nat)
+  if n <> Nat.to_int nat then
+    raise @@ Dimension_error("Vec.pad_left",n, Nat.to_int nat)
   else
     let v = zero nat in
     A.blit array 0 v 0 n;
     v
 
-let get: 'a t -> 'a H.t -> float = fun vec nat ->
-  A.unsafe_get vec (H.to_int nat)
+let get: 'a t -> 'a Nat.lt -> float = fun vec nat ->
+  A.unsafe_get vec (Nat.to_int nat)
 
-let set: 'a t -> 'a H.t -> float -> unit = fun vec nat x ->
-  A.unsafe_set vec (H.to_int nat) x
+let set: 'a t -> 'a Nat.lt -> float -> unit = fun vec nat x ->
+  A.unsafe_set vec (Nat.to_int nat) x
 
 let dim = Array.length
-let typed_dim (v: 'a t) : 'a H.t = H.create @@ dim v
+let typed_dim (v: 'a t) : 'a Nat.eq = Nat.create @@ dim v
 
 let map f v = Array.map f v
 
 let map_nat f v =
   let a = Array.make_float (dim v) in
-  H.iter_on (typed_dim v) (fun k -> A.unsafe_set a (H.to_int k) @@
-                            f k @@ A.unsafe_get a @@ H.to_int k );
+  Nat.iter_on (typed_dim v) (fun k -> A.unsafe_set a (Nat.to_int k) @@
+                            f k @@ A.unsafe_get a @@ Nat.to_int k );
   a
 
 let map2 ( <@> ) (v:'a t) (w:'a t) : 'a t =
@@ -78,7 +78,7 @@ let norm v = sqrt @@ prenorm v
 let proj v w = Operators.( *. ) ((scalar_prod v w)/.prenorm v)  v
 
 let base dim p =
-  let open H in
+  let open Nat in
   let Truth = p %<% dim in
   init dim @@ delta @@ to_int p
 

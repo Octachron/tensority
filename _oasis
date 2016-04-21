@@ -12,5 +12,10 @@ XOCamlbuildExtraArgs: "-use-ocamlfind"
 Library "tensority-light"
   Path:   src
   BuildDepends: oceti
-  Modules: Tensority_misc, Hexadecimal, Signatures, Small_vec, Small_matrix, Small_unified, Small_tensor, Tensor, Slices, Shape, Hex_definitions, Multidim_array
+  Modules: Tensority_misc, Nat, Signatures, Small_vec, Small_matrix, Small_unified, Small_tensor, Tensor, Slices, Shape, Nat_defs, Multidim_array
 
+Executable "ma"
+  Path: examples
+  MainIs: ma.ml
+  BuildDepends: tensority-light
+  Install: false

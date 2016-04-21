@@ -1,5 +1,4 @@
 open Range
-module H = Hexadecimal
 module MA = Multidim_array
 module A=Array
 let (@?) = A.unsafe_get
@@ -7,7 +6,7 @@ let (%) = A.unsafe_set
 let (=:) = (@@)
 
 
-type 'x t =  { contr:'a Shape.l;  cov:'b Shape.l;  array : float array }
+type 'x t =  { contr:'a Shape.eq;  cov:'b Shape.eq;  array : float array }
   constraint 'x = < contr:'a; cov:'b >
 
 type 'dim vec = <contr:'dim Shape.vector; cov:Shape.scalar> t
@@ -16,14 +15,14 @@ type ('d1,'d2,'d3) t3 = <contr:('d1,'d2) Shape.matrix; cov: 'd3 Shape.vector> t
 
 
 [%%indexop.arraylike
-  let get: <contr:'a; cov:'b> t -> ('a Shape.l * 'b Shape.l ) -> float = fun t (contr,cov) ->
+  let get: <contr:'a; cov:'b> t -> ('a Shape.lt * 'b Shape.lt ) -> float = fun t (contr,cov) ->
     let p = let open Shape in
      let c = position ~shape:t.cov ~indices:cov in
       position_gen ~shape:t.contr ~indices:contr ~final:c in
     t.array @? p
 
 
-  let set: < contr:'a; cov:'b > t -> ('a Shape.l * 'b Shape.l ) -> float -> unit = fun t (contr,cov) value ->
+  let set: < contr:'a; cov:'b > t -> ('a Shape.lt * 'b Shape.lt ) -> float -> unit = fun t (contr,cov) value ->
     let p = let open Shape in
      let c = position ~shape:t.cov ~indices:cov in
       position_gen ~shape:t.contr ~indices:contr ~final:c in
@@ -65,27 +64,27 @@ let map2 ( <@> ) (t1:'sh t) (t2:'sh t) : 'sh t =
   { t1 with array }
 
 let matrix dim_row dim_col f =
-  let n_row = H.to_int dim_row in
-  let n_col = H.to_int dim_col in
+  let n_row = Nat.to_int dim_row in
+  let n_col = Nat.to_int dim_col in
   let array = A.make_float (n_row * n_col) in
   let pos = ref 0 in
-  H.iter_on dim_col (fun j ->
-      H.iter_on dim_row ( fun i ->
+  Nat.iter_on dim_col (fun j ->
+      Nat.iter_on dim_row ( fun i ->
           array % !pos =: f i j
         ; incr pos
         )
     )
   ;
-  {
+  Shape.{
     cov= [%ll Elt dim_col] ;contr=[%ll Elt dim_row];
     array
   }
 
 let sq_matrix dim f = matrix dim dim f
 
-let vector (dim:'a H.t) f =
+let vector (dim:'a Nat.eq) f =
   let open Shape in
-  { cov=[%ll];contr=[%ll Elt dim]; array = H.ordinal_map f dim }
+  { cov=[%ll];contr=[%ll Elt dim]; array = Nat.ordinal_map f dim }
 
 let vec_dim (vec: 'dim vec) =
   let open Shape in
@@ -95,35 +94,37 @@ let vec_dim (vec: 'dim vec) =
 
 
 module Index = struct
+  [@@@warning "-8"] (** all warnings in this submodule corresponds to unreachable patterns *)
   open Shape
-let%with_ll _2 ([Elt nat]: _ vector l) ([Elt _]: _ vector l) r c =
-  H.( to_int r * to_int nat +  to_int c)
 
-let%with_ll _3 ([Elt nat1; Elt nat2]:(_,_) matrix l) ([Elt nat3]: _ vector  l) x y z =
-  H.( (to_int x * to_int nat2 + to_int y) * to_int nat3 +  to_int z)
+  let%with_ll _2 ([Elt nat]: _ vector l) ([Elt _]: _ vector l) r c =
+    Nat.( to_int r * to_int nat +  to_int c)
+
+  let%with_ll _3 ([Elt nat1; Elt nat2]:(_,_) matrix l) ([Elt nat3]: _ vector  l) x y z =
+    Nat.( (to_int x * to_int nat2 + to_int y) * to_int nat3 +  to_int z)
 end
 
 ;; [%%indexop
-let get_1: 'a vec -> 'a H.t -> float =
-  fun t n -> t.array @? H.to_int n
+let get_1: 'a vec -> 'a Nat.lt -> float =
+  fun t n -> t.array @? Nat.to_int n
 
-let set_1: 'a vec -> 'a H.t -> float -> unit =
-  fun t n -> t.array % H.to_int n
+let set_1: 'a vec -> 'a Nat.lt -> float -> unit =
+  fun t n -> t.array % Nat.to_int n
 
-let get_2: ('a,'b) matrix -> 'a H.t -> 'b H.t -> float =
+let get_2: ('a,'b) matrix -> 'a Nat.lt -> 'b Nat.lt -> float =
   fun t r c ->
     t.array @? Index._2 t.contr t.cov r c
 
-let set_2: ('a,'b) matrix -> 'a H.t -> 'b H.t -> float -> unit =
+let set_2: ('a,'b) matrix -> 'a Nat.lt -> 'b Nat.lt -> float -> unit =
   fun t r c  ->
     t.array % Index._2 t.contr t.cov r c
 
-let get_3: ('a,'b,'c) t3 -> 'a H.t -> 'b H.t -> 'c H.t -> float = fun t x y z ->
+let get_3: ('a,'b,'c) t3 -> 'a Nat.lt -> 'b Nat.lt -> 'c Nat.lt -> float = fun t x y z ->
     t.array @? Index._3 t.contr t.cov x y z
 
 let set_3:
   ('a,'b,'c) t3
-  -> 'a H.t -> 'b H.t -> 'c H.t
+  -> 'a Nat.lt -> 'b Nat.lt -> 'c Nat.lt
   -> float
   -> unit = fun t x y z ->
     t.array % Index._3 t.contr t.cov x y z
@@ -131,10 +132,10 @@ let set_3:
 
 ;;
 
-let delta i j = if H.to_int i = H.to_int j then 1. else 0.
+let delta i j = if Nat.to_int i = Nat.to_int j then 1. else 0.
 let id dim = sq_matrix dim delta
 let base dim p =
-  let open H in
+  let open Nat in
   let Truth = p %<% dim in
   vector dim @@ delta p
 
@@ -213,7 +214,7 @@ let up1: type left right dim tl tl2.
 
 let copy t = { t with array = A.copy t.array }
 let partial_copy t (f1,f2) =
-  let tnew = zero (Shape.filter f1 t.contr) (Shape.filter f2 t.cov) in
+  let tnew = zero (Shape.filter t.contr f1) (Shape.filter t.cov f2) in
   Shape.iter_masked_dual
     (fun sh2 sh2' ->
        Shape.iter_masked_dual (
@@ -268,23 +269,23 @@ let det ( mat : <contr:'a Shape.vector; cov:'a Shape.vector> t): float=
     let find_max (i,max) k =
       let abs_k = abs_float mat.{ !k, j } in
       if abs_k > max then (k,abs_k) else (i,max) in
-    let start = H.succ j and acc = j, abs mat.{!j,j} in
+    let start = Nat.succ j and acc = j, abs mat.{!j,j} in
     let i, max  =
-      H.fold_nat_partial ~stop:dim ~start ~acc find_max in
+      Nat.partial_fold_nat ~stop:dim ~start ~acc find_max in
     if max > 0. then swap j i else raise Break in
   let transl ?(start=0) ~from ~to_ coeff =
-    H.iter_partial ~start ~stop:dim (fun j ->
+    Nat.partial_iter ~start ~stop:dim (fun j ->
         mat.{!to_,j} <- mat.{!to_,j} +. coeff *. mat.{!from,j}
       )
   in
   try
-    H.iter_on dim (fun i ->
+    Nat.iter_on dim (fun i ->
     pivot i;
     let c = mat.{!i,i} in
-    H.iter_partial ~start:(H.succ i) ~stop:dim
-      (fun to_ -> transl ~start:(H.to_int i) ~from:i ~to_ c)
+    Nat.partial_iter ~start:(Nat.succ i) ~stop:dim
+      (fun to_ -> transl ~start:(Nat.to_int i) ~from:i ~to_ c)
       )
-  ; H.fold_nat (fun p k -> p *. mat.{!k,k} ) sign.contents dim
+  ; Nat.fold_nat (fun p k -> p *. mat.{!k,k} ) sign.contents dim
   with Break -> 0.
 
 (** Given (n-1) vectors of dimension n, compute the normal to the hyperplane
@@ -299,13 +300,13 @@ let normal (array: 'dim vec array): 'dim vec =
     Invalid_argument "Tensor.normal expects array of size >0";
   let open Shape in
   let dim = vec_dim @@ array @? 0 in
-  let module Dyn = H.Dynamic(struct let dim = nvec end) in
-  let open Hex_definitions in
-  let ( %+% ) = H.certified_adder Dyn.dim _1 dim in
+  let module Dyn = Nat.Dynamic(struct let dim = nvec end) in
+  let open Nat_defs in
+  let ( %+% ) = Nat.certified_adder Dyn.dim _1 dim in
   let minor k = det @@ sq_matrix Dyn.dim (fun i j ->
       let offset =
-        if H.( to_int i < to_int k) then _0p else _1p in
-      (array @? H.to_int j).{i %+% offset}
+        if Nat.( to_int i < to_int k) then _0p else _1p in
+      (array @? Nat.to_int j).{i %+% offset}
     )
   in
   vector dim minor

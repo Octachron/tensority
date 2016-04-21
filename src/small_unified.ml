@@ -1,7 +1,6 @@
 
 module V = Small_vec
 module M = Small_matrix
-module H = Hexadecimal
 
 type _ t =
     | Scalar: float ref -> < contr:Shape.scalar; cov: Shape.scalar > t
@@ -81,7 +80,8 @@ type _ t =
   end
 
   [%%indexop.arraylike
-    let get: type a b. <contr:a; cov:b> t -> (a Shape.l * b Shape.l) -> float = fun t (contr,cov) ->
+    let get: type a b. <contr:a; cov:b> t -> (a Shape.lt * b Shape.lt)
+      -> float = fun t (contr,cov) ->
       let open Shape in
       match%with_ll t, contr, cov with
       | Scalar f, [] , [] -> !f
@@ -89,7 +89,7 @@ type _ t =
       | Matrix m, [Elt i], [Elt j] -> M.( m.(i,j) )
       | _ -> assert false (* unreachable *)
 
-    and set: type a b. <contr:a; cov:b> t -> (a Shape.l * b Shape.l) -> float -> unit
+    and set: type a b. <contr:a; cov:b> t -> (a Shape.lt * b Shape.lt) -> float -> unit
       = fun t (contr,cov) x ->
         let open Shape in
         match%with_ll t, contr, cov with

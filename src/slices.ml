@@ -1,15 +1,12 @@
 module N = Natl
-module H = Hexadecimal
 module S = Shape
 type nil = S.nil
 open Shape
 type 'a filtered =
   | Filter:
-     <list:'l;n:'n> l *
-     < t_in:<list:'l; n:'n> ;
-       t_out:<list:'l_out; n:'n_out>
-     > s
-    -> <list:'l_out; n:'n_out> filtered
+     <list:'l; n:'n> l *
+     (<list:'l;n:'n>, <list:'l2;n:'n2>) s
+    -> <list:'l2;n:'n2> filtered
 
 type 'a t = {
   array: float array
@@ -19,7 +16,7 @@ type 'a t = {
   constraint 'a = < cov: 'cov; contr: 'contr >
 
 let rec full: type sh.
-  sh l -> < t_in:sh; t_out:sh> s = function%with_ll
+  sh l -> (sh, sh) s = function%with_ll
   | [] -> []
   | (Elt n) :: sh -> All :: full sh
 
@@ -32,9 +29,9 @@ let slice (tensor: _ Tensor.t) = {
 }
 
 let rec join: type li lm lo ni nm no.
-  <t_in: <list:li;n:ni> as 'i; t_out:<list:lm;n:nm> as 'm > s ->
-  <t_in:'m; t_out:<list:lo;n:no> as 'o > s ->
-  <t_in:'i; t_out:'o > s
+  (<list:li;n:ni> as 'i, <list:lm;n:nm> as 'm) s ->
+  ('m,<list:lo;n:no> as 'o) s ->
+  ('i,'o) s
   = fun slice1 slice2 ->
     match%with_ll slice1, slice2 with
   | [], [] -> []
@@ -52,9 +49,9 @@ let rec join: type li lm lo ni nm no.
 let (>>) = join
 
 let subfilter (type l_in) (type l_out) (type n_in) (type n_out)
-    (Filter (sh,filter): <n:n_in;list: l_in>  filtered)
+    (Filter (sh,filter): <n:n_in;list: l_in> filtered)
     (new_filter:
-       < t_in:<n:n_in;list:l_in>; t_out:<n:n_out; list:l_out> > s) =
+       (<n:n_in;list:l_in>, <n:n_out; list:l_out>) s) =
   Filter(sh, filter >> new_filter)
 
 let subslice s f_contr f_cov =
@@ -67,21 +64,21 @@ let subslice s f_contr f_cov =
 let rec position_gen:
   type sh filt rin rout.
   mult:int -> sum:int
-  -> < t_in:sh; t_out:filt > s
+  -> (sh, filt) s
   -> sh l
-  -> filt l -> int * int =
+  -> filt lt -> int * int =
   fun ~mult ~sum filter shape indices ->
   match%with_ll filter, shape, indices with
   | All :: filter , Elt dim :: shape, Elt nat :: indices  ->
-    position_gen ~mult:(mult * H.to_int dim) ~sum:(sum + mult * H.to_int nat)
+    position_gen ~mult:(mult * Nat.to_int dim) ~sum:(sum + mult * Nat.to_int nat)
       filter shape indices
   | Elt nat :: filter, Elt dim :: shape, _ ->
-    position_gen ~sum:(sum + mult * H.to_int nat)
-      ~mult:(H.to_int dim * mult) filter shape indices
+    position_gen ~sum:(sum + mult * Nat.to_int nat)
+      ~mult:(Nat.to_int dim * mult) filter shape indices
   | Range r :: filter, Elt dim :: shape, Elt nat :: indices ->
     let nat = Range.transpose r nat in
-    position_gen ~sum:(sum + mult * H.to_int nat)
-      ~mult:(H.to_int dim * mult) filter shape indices
+    position_gen ~sum:(sum + mult * Nat.to_int nat)
+      ~mult:(Nat.to_int dim * mult) filter shape indices
   | [], [], _ -> mult, sum
   | _, _ , _ -> assert false (* unreachable *)
 
