@@ -8,46 +8,35 @@ type 'a filtered =
      (<list:'l;n:'n>, <list:'l2;n:'n2>) s
     -> <list:'l2;n:'n2> filtered
 
+type stride = {offset:int; strides:int array}
+
 type 'a t = {
   array: float array
-; contr:'contr filtered
-; cov : 'cov filtered
+; contr:'contr Shape.eq
+; cov : 'cov Shape.eq
+; stride: stride
 }
   constraint 'a = < cov: 'cov; contr: 'contr >
 
-let rec full: type sh.
-  sh l -> (sh, sh) s = function%with_ll
-  | [] -> []
-  | (Elt n) :: sh -> All :: full sh
+let full_stride (tensor: _ Tensor.t) =
+  let size = Shape.order tensor.Tensor.contr + Shape.order tensor.Tensor.cov in
+  let strides = Array.make size 1 in
+  let f i k = strides.(i) <- k * strides.(i-1); i + 1 in
+  let open Tensor in
+  let pos = Shape.fold f 1 tensor.contr in
+  let _i = Shape.fold (fun i elt -> if i<size then f i elt else i) pos tensor.cov in
+  {offset = 0; strides}
 
-let take_all sh = Filter(sh, full sh)
 
 let slice (tensor: _ Tensor.t) = {
   array = tensor.Tensor.array;
-  contr= take_all tensor.Tensor.contr;
-  cov= take_all tensor.Tensor.cov
+  contr= tensor.Tensor.contr;
+  cov= tensor.Tensor.cov;
+  stride = full_stride tensor
 }
 
-let rec join: type li lm lo ni nm no.
-  (<list:li;n:ni> as 'i, <list:lm;n:nm> as 'm) s ->
-  ('m,<list:lo;n:no> as 'o) s ->
-  ('i,'o) s
-  = fun slice1 slice2 ->
-    match%with_ll slice1, slice2 with
-  | [], [] -> []
-  | Elt k :: slice1, _ -> Elt k :: (join slice1 slice2)
-  | All :: slice1, All::slice2 -> All :: (join slice1 slice2)
-  | All :: slice1, Elt k :: slice2 -> (Elt k) :: (join slice1 slice2)
-  | All :: slice1, Range r :: slice2 -> Range r :: (join slice1 slice2)
-  | (Range _ as r) :: slice1, All::slice2 -> r :: (join slice1 slice2)
-  | Range r :: slice1, Elt k :: slice2 ->
-    Elt (Range.transpose r k) :: (join slice1 slice2)
-  | Range r :: slice1, Range r2 :: slice2 ->
-    Range (Range.compose r r2) :: (join slice1 slice2)
-  | [], _ :: _ -> assert false
 
-let (>>) = join
-
+let sub
 let subfilter (type l_in) (type l_out) (type n_in) (type n_out)
     (Filter (sh,filter): <n:n_in;list: l_in> filtered)
     (new_filter:
@@ -61,26 +50,7 @@ let subslice s f_contr f_cov =
     cov= subfilter s.cov f_cov;
   }
 
-let rec position_gen:
-  type sh filt rin rout.
-  mult:int -> sum:int
-  -> (sh, filt) s
-  -> sh l
-  -> filt lt -> int * int =
-  fun ~mult ~sum filter shape indices ->
-  match%with_ll filter, shape, indices with
-  | All :: filter , Elt dim :: shape, Elt nat :: indices  ->
-    position_gen ~mult:(mult * Nat.to_int dim) ~sum:(sum + mult * Nat.to_int nat)
-      filter shape indices
-  | Elt nat :: filter, Elt dim :: shape, _ ->
-    position_gen ~sum:(sum + mult * Nat.to_int nat)
-      ~mult:(Nat.to_int dim * mult) filter shape indices
-  | Range r :: filter, Elt dim :: shape, Elt nat :: indices ->
-    let nat = Range.transpose r nat in
-    position_gen ~sum:(sum + mult * Nat.to_int nat)
-      ~mult:(Nat.to_int dim * mult) filter shape indices
-  | [], [], _ -> mult, sum
-  | _, _ , _ -> assert false (* unreachable *)
+
 
 let position { contr= Filter(sh,f); cov = Filter(sh',f'); _ } ~contr_pos ~cov_pos  =
   let mult, sum = position_gen ~mult:1 ~sum:0 f sh contr_pos in

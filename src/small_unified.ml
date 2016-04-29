@@ -1,11 +1,13 @@
 
 module V = Small_vec
 module M = Small_matrix
+module T = Tensor
 
 type _ t =
     | Scalar: float ref -> < contr:Shape.scalar; cov: Shape.scalar > t
     | Vec: 'a V.t -> < contr: 'a Shape.vector; cov: Shape.scalar > t
     | Matrix: ('a * 'b) M.t -> < contr:'a Shape.vector; cov:'b Shape.vector > t
+    (* | Tensor: 'sh Tensor.t -> 'sh t*)
 
   let scalar f = Scalar f
   let vector n array = Vec(V.create n array)
@@ -19,12 +21,13 @@ type _ t =
     | Scalar x, Scalar y -> Scalar ( ref @@ !x +. !y )
     | Vec x, Vec y -> Vec V.(x + y)
     | Matrix x, Matrix y -> Matrix M.( x + y )
-    | _ -> raise @@ Not_implemented "( + )"
+  (*  | _ -> . *) (*raise @@ Not_implemented "( + )" *)
 
   let (-) (type a)  (x: a t)(y: a t): a t =  match x, y with
     | Scalar x, Scalar y -> Scalar ( ref @@ !x -. !y )
     | Vec x, Vec y -> Vec V.(x - y)
     | Matrix x, Matrix y -> Matrix M.( x - y )
+  (*    | Tensor x, Tensor y -> Tensor T.( x - y) *)
   (*    | _ -> raise @@ Not_implemented "( - )" *)
 
   let (~-) (type a) (t:a t) : a t = match t with
@@ -47,7 +50,6 @@ type _ t =
     | Matrix m, Matrix n -> Matrix M.( m * n)
     | Matrix m, Vec v -> Vec M.( m @ v )
     | Vec v, Scalar f -> Vec V.( !f *. v )
-    | _ -> raise @@ Not_implemented "( * )"
 
 
   let one (type a): <contr:a;cov:a> t -> <contr:a;cov:a> t = function
@@ -87,7 +89,7 @@ type _ t =
       | Scalar f, [] , [] -> !f
       | Vec v, [Elt a], [] -> V.( v.(a) )
       | Matrix m, [Elt i], [Elt j] -> M.( m.(i,j) )
-      | _ -> assert false (* unreachable *)
+      | _ -> .
 
     and set: type a b. <contr:a; cov:b> t -> (a Shape.lt * b Shape.lt) -> float -> unit
       = fun t (contr,cov) x ->
@@ -96,7 +98,7 @@ type _ t =
         | Scalar f, [] , [] -> f := x
         | Vec v, [Elt a] ,  [] -> V.( v.(a) <- x )
         | Matrix m, [Elt i], [Elt j] -> M.( m.(i,j) <- x )
-        | _ -> assert false
+        | _ -> .
   ]
 
   [%%indexop

@@ -6,7 +6,11 @@ let (%) = A.unsafe_set
 let (=:) = (@@)
 
 
-type 'x t =  { contr:'a Shape.eq;  cov:'b Shape.eq;  array : float array }
+type 'x t =  { contr:'a Shape.eq
+             ; cov:'b Shape.eq
+             ; stride:Shape.Stride.t
+             ; array : float array
+             }
   constraint 'x = < contr:'a; cov:'b >
 
 type 'dim vec = <contr:'dim Shape.vector; cov:Shape.scalar> t
@@ -15,119 +19,165 @@ type ('d1,'d2,'d3) t3 = <contr:('d1,'d2) Shape.matrix; cov: 'd3 Shape.vector> t
 
 
 [%%indexop.arraylike
-  let get: <contr:'a; cov:'b> t -> ('a Shape.lt * 'b Shape.lt ) -> float = fun t (contr,cov) ->
+  let get: <contr:'a; cov:'b> t -> ('a Shape.lt * 'b Shape.lt ) -> float = fun t
+    (contr,cov) ->
     let p = let open Shape in
-     let c = position ~shape:t.cov ~indices:cov in
-      position_gen ~shape:t.contr ~indices:contr ~final:c in
+      let c = full_position ~stride:t.stride ~shape:t.contr ~indices:contr in
+      position ~stride:c ~shape:t.cov ~indices:cov in
     t.array @? p
 
 
-  let set: < contr:'a; cov:'b > t -> ('a Shape.lt * 'b Shape.lt ) -> float -> unit = fun t (contr,cov) value ->
+  let set: < contr:'a; cov:'b > t -> ('a Shape.lt * 'b Shape.lt ) -> float -> unit
+    = fun t (contr,cov) value ->
     let p = let open Shape in
-     let c = position ~shape:t.cov ~indices:cov in
-      position_gen ~shape:t.contr ~indices:contr ~final:c in
+      let c = full_position ~stride:t.stride ~shape:t.contr ~indices:contr in
+      position ~stride:c ~shape:t.cov ~indices:cov in
     t.array % p =: value
 ]
 
-let pow_int x k =
-  let rec aux x m k = match k with
-    | 0 -> m
-    | 1 -> m * x
-    | k when k land 1 = 1 -> aux (x*x) (x*m) (k lsr 1)
-    | k -> aux (x*x) m (k lsr 1) in
-  aux x 1 k
 
-let ( **^ )= pow_int
-
-let cov_size t = Shape.size t.cov
-let contr_size t = Shape.size t.contr
+let cov_size t = Shape.logical_size t.cov
+let contr_size t = Shape.logical_size t.contr
 let len t = A.length t.array
 let contr_dims t = t.contr
 let cov_dims t = t.cov
-(* let fix t = Shape.{ t with cov = fix t.cov ; contr = fix t.contr } *)
+let is_sparse t = Shape.(
+    not(Stride.is_neutral t.stride) || is_sparse t.contr || is_sparse t.cov
+  )
 
-let create cov contr const=
-  let len = (Shape.size cov) * (Shape.size contr) in
-  {cov;contr; array=A.make len 0. }
+let create ~contr ~cov const=
+  let cov = Shape.detach cov and contr = Shape.detach contr in
+  let len = (Shape.physical_size cov) * (Shape.physical_size contr) in
+  {cov;contr; array=A.make len 0.; stride = Shape.Stride.neutral }
 
-let zero cov contr = create cov contr 0.
+let zero ~contr ~cov = create ~contr ~cov  0.
 
-let reshape t (contr,cov) =
-  let l = len t and dim = Shape.(size contr * size cov) in
-  if l <> dim then
-    raise @@ Signatures.Dimension_error("Tensor.reshape", l, dim)
-  else
-    { t with contr; cov }
-
-let map2 ( <@> ) (t1:'sh t) (t2:'sh t) : 'sh t =
-  let array = A.mapi ( fun i x -> x <@> t2.array @? i ) t1.array in
-  { t1 with array }
-
-let matrix dim_row dim_col f =
-  let n_row = Nat.to_int dim_row in
-  let n_col = Nat.to_int dim_col in
-  let array = A.make_float (n_row * n_col) in
-  let pos = ref 0 in
-  Nat.iter_on dim_col (fun j ->
-      Nat.iter_on dim_row ( fun i ->
-          array % !pos =: f i j
-        ; incr pos
+let init_sh f ~contr ~cov =
+  let r = zero ~contr ~cov in
+  Shape.iter_on contr ( fun contr ->
+      Shape.iter_on cov ( fun cov ->
+          r.(contr,cov) <- f contr cov
         )
     )
-  ;
-  Shape.{
-    cov= [%ll Elt dim_col] ;contr=[%ll Elt dim_row];
-    array
+; r
+
+let pp ppf t =
+  let order = Shape.order t.cov in
+  let sep ?(start=0) ppf n =
+    match n + start with
+      | 0 -> Format.fprintf ppf ",@ "
+      | 1 -> Format.fprintf ppf ";@ "
+      | 2 -> Format.fprintf ppf "@,"
+      | n ->  Format.fprintf ppf "@," in
+  let up _ = Format.fprintf ppf "@["
+  and down _ = Format.fprintf ppf "@]" in
+  let pp_scalar ppf x= Format.fprintf ppf "%f" x in
+  let pp_cov ppf t contr  =
+    Shape.iter_sep ~up ~down ~sep:(sep ppf) t.cov ~f:(fun cov ->
+        pp_scalar ppf t.(contr,cov)
+      ) in
+  let pp_array ppf t =
+    Shape.iter_sep ~up ~down
+      ~sep:(sep ~start:order ppf) ~f:(pp_cov ppf t) t.contr in
+  Format.fprintf ppf "@[{contr=%a;@ cov=%a;@ array=%a}@]"
+    Shape.pp t.contr Shape.pp t.cov
+    pp_array t
+
+let show t = Format.asprintf "%a" pp t
+
+let reshape t (contr,cov) =
+  if is_sparse t then
+    raise @@ Invalid_argument "Tensor.reshape: sparse tensor cannot be reshaped"
+  else
+    let l = len t and dim = Shape.(logical_size contr * logical_size cov) in
+    if l <> dim then
+      raise @@ Signatures.Dimension_error("Tensor.reshape", l, dim)
+    else
+      { t with contr; cov }
+
+let matrix dim_row dim_col f: ('a,'b) matrix =
+  let size = Nat.(to_int dim_row * to_int dim_col) in
+  let array = A.make_float size in
+  let pos = ref 0 in
+  let () = (*init*)
+    Nat.iter_on dim_row (fun i ->
+        Nat.iter_on dim_col (fun j ->
+            array % !pos =: f i j
+          ; incr pos
+          )
+      ) in
+  { contr=[%ll Elt dim_row]
+  ; cov=[%ll Elt dim_col]
+  ; stride = Shape.Stride.neutral
+  ; array
   }
 
 let sq_matrix dim f = matrix dim dim f
 
-let vector (dim:'a Nat.eq) f =
+let vector (dim:'a Nat.eq) f :' a vec=
   let open Shape in
-  { cov=[%ll];contr=[%ll Elt dim]; array = Nat.ordinal_map f dim }
+  { cov=[%ll]; contr=[%ll Elt dim]; stride = Shape.Stride.neutral;
+    array= Nat.ordinal_map f dim }
 
 let vec_dim (vec: 'dim vec) =
   let open Shape in
   match%with_ll contr_dims vec with
+  | [P_elt (_, dim)] -> dim
   | [Elt dim] -> dim
-  | _ :: _ :: _ -> assert false
+  | _ :: _ :: _ -> .
 
 
 module Index = struct
-  [@@@warning "-8"] (** all warnings in this submodule corresponds to unreachable patterns *)
+
   open Shape
 
-  let%with_ll _2 ([Elt nat]: _ vector l) ([Elt _]: _ vector l) r c =
-    Nat.( to_int r * to_int nat +  to_int c)
+  let%with_ll pos_2 stride (v: _ vector l) (_w: _ vector l) r c=
+    let core dim_v =
+      let open Shape.Stride in
+      stride.offset + stride.size * Nat.( to_int r + dim_v * to_int c) in
+    match v with
+    | [Elt nat] -> core @@ Nat.to_int nat
+    | [P_elt (dim,_) ] -> core dim
+    | _ :: _ :: _ -> .
 
-  let%with_ll _3 ([Elt nat1; Elt nat2]:(_,_) matrix l) ([Elt nat3]: _ vector  l) x y z =
-    Nat.( (to_int x * to_int nat2 + to_int y) * to_int nat3 +  to_int z)
+  let%with_ll pos_3 (type a b) stride (v:(a,b) matrix l) (_w: _ vector l) r c h=
+    let core dim_r dim_c =
+      let open Stride in
+      stride.offset + stride.size * Nat.( to_int r + dim_r *
+      (to_int c + dim_c * to_int h) ) in
+    match v with
+    | [Elt n1; Elt n2 ] -> core (Nat.to_int n1) (Nat.to_int n2)
+    | [P_elt (n1,_); P_elt (n2,_) ] -> core n1 n2
+    | [P_elt (n1,_); Elt n2 ] -> core n1 (Nat.to_int n2)
+    | [Elt n1; P_elt (n2,_) ] -> core (Nat.to_int n1) n2
+    | _ :: _ :: _  :: _ -> .
+
 end
 
 ;; [%%indexop
 let get_1: 'a vec -> 'a Nat.lt -> float =
-  fun t n -> t.array @? Nat.to_int n
+  fun t n -> t.array @? Shape.Stride.(t.stride.offset + t.stride.size * Nat.to_int n)
 
 let set_1: 'a vec -> 'a Nat.lt -> float -> unit =
   fun t n -> t.array % Nat.to_int n
 
 let get_2: ('a,'b) matrix -> 'a Nat.lt -> 'b Nat.lt -> float =
   fun t r c ->
-    t.array @? Index._2 t.contr t.cov r c
+    t.array @? Index.pos_2 t.stride t.contr t.cov r c
 
 let set_2: ('a,'b) matrix -> 'a Nat.lt -> 'b Nat.lt -> float -> unit =
   fun t r c  ->
-    t.array % Index._2 t.contr t.cov r c
+    t.array % Index.pos_2 t.stride t.contr t.cov r c
 
 let get_3: ('a,'b,'c) t3 -> 'a Nat.lt -> 'b Nat.lt -> 'c Nat.lt -> float = fun t x y z ->
-    t.array @? Index._3 t.contr t.cov x y z
+    t.array @? Index.pos_3 t.stride t.contr t.cov x y z
 
 let set_3:
   ('a,'b,'c) t3
   -> 'a Nat.lt -> 'b Nat.lt -> 'c Nat.lt
   -> float
   -> unit = fun t x y z ->
-    t.array % Index._3 t.contr t.cov x y z
+    t.array % Index.pos_3 t.stride t.contr t.cov x y z
 ]
 
 ;;
@@ -139,6 +189,73 @@ let base dim p =
   let Truth = p %<% dim in
   vector dim @@ delta p
 
+let endo_dim (mat: ('a,'a) matrix) =
+  let open Shape in
+  match%with_ll mat.contr with
+  | [P_elt (_,dim)] -> dim
+  | [Elt dim] -> dim
+  | _ :: _ :: _ -> .
+
+module Sparse = struct
+
+  let transpose t =
+    let tt = zero ~cov:t.contr ~contr:t.cov in
+    Shape.iter_on t.contr ( fun contr ->
+        Shape.iter_on t.cov ( fun cov ->
+            tt.(cov,contr) <- t.(contr,cov)
+          )
+      )
+  ; tt
+
+  let mult t1 t2 =
+    let r = zero t1.contr t2.cov in
+    Shape.iter_on t1.contr (fun i ->
+        Shape.iter_on t1.cov (fun k ->
+            Shape.iter_on t2.cov ( fun j ->
+                r.(i,j)<- r.(i,j) +. t1.(i,k) *. t2.(k,j)
+              )
+          )
+      )
+  ; r
+
+  let full_contraction t1 t2 =
+    let s = ref 0. in
+    Shape.iter_on t1.contr ( fun contr ->
+        Shape.iter_on t1.cov ( fun cov ->
+            s := !s +. t1.(contr,cov) *. t2.(cov,contr)
+          )
+      )
+  ; !s
+
+  let scalar_product t1 t2 =
+    let s = ref 0. in
+    Shape.iter_on t1.contr ( fun contr ->
+        Shape.iter_on t1.cov ( fun cov ->
+            s := !s +. t1.(contr,cov) *. t2.(contr,cov)
+          )
+      )
+  ; !s
+
+  let map2 ( <+> ) t1 t2 =
+    init_sh ~contr:t1.contr ~cov:t1.cov (fun contr cov ->
+        t1.(contr,cov) <+> t2.(contr,cov)
+      )
+
+  let scalar_map f t1 =
+    init_sh ~contr:t1.contr ~cov:t1.cov
+      (fun contr cov -> f t1.(contr,cov))
+
+
+end
+
+
+(** Optimized version when tensor are not sparse *)
+module Full = struct
+
+let map2 ( <@> ) (t1:'sh t) (t2:'sh t) : 'sh t =
+  let array = A.mapi ( fun i x -> x <@> t2.array @? i ) t1.array in
+  { t1 with array }
+
 let transpose: < contr:'left; cov:'right > t -> < contr:'right; cov:'left > t =
   fun t1 ->
   let left =  contr_size t1
@@ -148,9 +265,9 @@ let transpose: < contr:'left; cov:'right > t -> < contr:'right; cov:'left > t =
     iter_on (range left ^ range right) (fun i j ->
         t1.array % (i * right + j ) =: t1.array @? (j * right + i)
       ) in
-  { array; contr = t1.cov; cov = t1.contr }
+  { array; contr = t1.cov; cov = t1.contr; stride = Shape.Stride.neutral }
 
-let ( * ) (t1: <contr:'left; cov:'mid> t) (t2: <contr:'mid; cov:'right> t) :
+let mult (t1: <contr:'left; cov:'mid> t) (t2: <contr:'mid; cov:'right> t) :
   <contr:'left; cov:'right> t =
   let left_dim = contr_size t1
   and middle_dim = cov_size t1
@@ -161,37 +278,96 @@ let ( * ) (t1: <contr:'left; cov:'mid> t) (t2: <contr:'mid; cov:'right> t) :
   iter_on (range left_dim ^ range middle_dim ^ range right_dim) (
     fun i k j ->
       let pos = i * right_dim + j in
-      A.unsafe_set array (pos) @@
-      A.unsafe_get array pos +.
-      A.unsafe_get l ( i * middle_dim + k ) *. A.unsafe_get r ( k * right_dim + j)
+      array % pos =:
+      (array @? pos) +.
+      (l @? i * middle_dim + k ) *. (r @? k * right_dim + j)
   );
-  {array; contr = t1.contr; cov = t2.cov}
+  {array; contr = t1.contr; cov = t2.cov; stride = Shape.Stride.neutral }
 
-let unsafe_contraction t1 t2 =
-let l = len t1 in
-let s =ref 0. in
-iter_on (range l ^ range l) (fun i j ->
-    s:= !s +.  A.unsafe_get t1.array i *. A.unsafe_get t2.array j
-  ) ;
-!s
 
-let full_contraction (t1: <contr:'a; cov:'b> t ) (t2: < contr:'b; cov:'a > t) = unsafe_contraction t1 t2
+let full_contraction (t1: <contr:'a; cov:'b> t ) (t2: < contr:'b; cov:'a > t) =
+  let left = contr_size t1 and right = cov_size t1 in
+  let s = ref 0. in
+  Range.iter_on (range left ^ range right) (fun i j ->
+      s := !s +. (t1.array @? i + left * j) *. (t2.array @? j + right * i)
+    )
+  ; !s
 
-let scalar_product (t1: 'sh t) (t2: 'sh t) = unsafe_contraction t1 t2
+let scalar_product (t1: 'sh t) (t2: 'sh t) =
+  let l = len t1 in
+  let s =ref 0. in
+  for i = 0 to l - 1 do
+    s:= !s +. (t1.array @? i) *. (t2.array @? i)
+  done
+  ; !s
 
+let scalar_map f t =
+  { t with array = A.map f t.array }
+
+end
+
+let transpose t =
+  if is_sparse t then
+    Sparse.transpose t
+  else
+    Full.transpose t
+
+let mult t1 t2 =
+  if is_sparse t1 || is_sparse t2 then
+    Sparse.mult t1 t2
+  else
+    Full.mult t1 t2
+
+
+let full_contraction t1 t2 =
+  if is_sparse t1 || is_sparse t2 then
+    Sparse.full_contraction t1 t2
+  else
+    Full.full_contraction t1 t2
+
+
+let scalar_product t1 t2 =
+  if is_sparse t1 || is_sparse t2 then
+    Sparse.scalar_product t1 t2
+  else
+    Full.scalar_product t1 t2
+
+
+  let map2 ( <+> ) t1 t2 =
+  if is_sparse t1 || is_sparse t2 then
+    Sparse.map2 (<+>) t1 t2
+  else
+    Full.map2 (<+>) t1 t2
+
+
+let scalar_map f t =
+  if is_sparse t then
+    Sparse.scalar_map f t
+  else
+    Full.scalar_map f t
+
+let pow_int x k =
+  let ( * ) = mult in
+  let rec aux x m k = match k with
+    | 0 -> m
+    | 1 -> m * x
+    | k when k land 1 = 1 -> aux (x*x) (x*m) (k lsr 1)
+    | k -> aux (x*x) m (k lsr 1) in
+  let id =  id @@ endo_dim x in
+  aux x id k
 
 module Operators = struct
+let ( * ) x y = mult x y
 let ( |*| ) x y = scalar_product x y
 let ( + ) t1 t2 = map2 ( +. ) t1 t2
 let ( - ) t1 t2 = map2 ( -. ) t1 t2
 
-let ( *. ) : float -> 'sh t -> 'sh t = fun m t1 ->
-  let array = A.map ( fun x -> m *. x ) t1.array in
-  { t1 with array }
+let ( *. )  l t = scalar_map ( ( *. ) l ) t
 
-let ( /. ) : float -> 'sh t -> 'sh t = fun m t1 ->
-  let array = A.map ( fun x -> x /. m ) t1.array in
-  { t1 with array }
+let ( /. ) l t = scalar_map ( fun x -> x /. l ) t
+
+let ( ** )= pow_int
+
 end
 
 (* to do:
@@ -202,7 +378,7 @@ end
 let full_up: type left right tl.
   (<l: left; tl:right>, <l:right; tl:tl> ) t -> (<l:left;tl:tl>, 'a Shape.scalar ) t =
   fun t1 ->
-    Shape.{ t1 with contr=t1.contr @ t1.cov; cov = [%ll] } 
+    Shape.{ t1 with contr=t1.contr @ t1.cov; cov = [%ll] }
 
 let up1: type left right dim tl tl2.
   (<l: left; tl:dim->tl >, <l:dim -> right; tl:tl2> ) t ->
@@ -212,9 +388,17 @@ let up1: type left right dim tl tl2.
   | dim::right -> { t with contr = t.contr @ [dim] ; cov = right }
 *)
 
-let copy t = { t with array = A.copy t.array }
+let copy t =
+  if is_sparse t then
+  create ~contr:t.contr ~cov:t.cov
+    ( fun i j -> t.(i,j) )
+  else
+    { t with array = A.copy t.array }
+
 let partial_copy t (f1,f2) =
-  let tnew = zero (Shape.filter t.contr f1) (Shape.filter t.cov f2) in
+  let tnew = zero
+      ~contr:(Shape.filter_with_copy t.contr f1)
+      ~cov:(Shape.filter_with_copy t.cov f2) in
   Shape.iter_masked_dual
     (fun sh2 sh2' ->
        Shape.iter_masked_dual (
@@ -222,6 +406,11 @@ let partial_copy t (f1,f2) =
            tnew.(sh1,sh2) <- t.(sh1',sh2')
        ) t.contr f1
     )  t.cov f2
+
+let slice t (f1,f2) =
+  let final_stride, cov = Shape.filter ~stride:(Shape.Stride.neutral) t.cov f2 in
+  let stride, contr = Shape.filter ~stride:t.stride ~final_stride t.contr f1 in
+  { t with contr; cov; stride }
 
 let blit t t2 =
   Shape.iter ( fun sh' ->
@@ -238,20 +427,13 @@ let partial_blit t (f1,f2) t2 =
     ) t.cov f2
 
 
-let%indexop.stringlike get = partial_copy
+let%indexop.stringlike get = slice
 and set = partial_blit
 
 exception Break
 
-let endo_dim (mat: ('a,'a) matrix) =
-  let open Shape in
-  match%with_ll mat.contr with
-  | [Elt dim] -> dim
-  | _ :: _ :: _ -> assert false
-
 let det ( mat : <contr:'a Shape.vector; cov:'a Shape.vector> t): float=
   let abs = abs_float in
-  let open Shape in
   let dim = endo_dim mat in
   let mat = copy mat in
   let sign = ref 1. in
@@ -283,14 +465,14 @@ let det ( mat : <contr:'a Shape.vector; cov:'a Shape.vector> t): float=
     pivot i;
     let c = mat.{!i,i} in
     Nat.partial_iter ~start:(Nat.succ i) ~stop:dim
-      (fun to_ -> transl ~start:(Nat.to_int i) ~from:i ~to_ c)
+      (fun to_ -> transl ~start:(Nat.to_int i) ~from:i ~to_ (-. mat.{!to_,i}/. c) )
       )
   ; Nat.fold_nat (fun p k -> p *. mat.{!k,k} ) sign.contents dim
   with Break -> 0.
 
 (** Given (n-1) vectors of dimension n, compute the normal to the hyperplane
     defined by these vectors with norm equal to their (n-1)-volume;
-    sometimes mistakenly called vector or cross product in dimension 3.
+    sometimes erroneously called vector or cross product in dimension 3.
     * raise Invalid_argument if array = [||]
     * raise dimension_error if array lenght and vector dimension disagrees
 *)
@@ -298,7 +480,6 @@ let normal (array: 'dim vec array): 'dim vec =
   let nvec = A.length array in
   if nvec = 0 then raise @@
     Invalid_argument "Tensor.normal expects array of size >0";
-  let open Shape in
   let dim = vec_dim @@ array @? 0 in
   let module Dyn = Nat.Dynamic(struct let dim = nvec end) in
   let open Nat_defs in
@@ -310,6 +491,5 @@ let normal (array: 'dim vec array): 'dim vec =
     )
   in
   vector dim minor
-
 
 include Operators

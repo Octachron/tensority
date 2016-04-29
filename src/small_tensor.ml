@@ -4,9 +4,6 @@
 
 *)
 
-module H = Hexadecimal
-module A = Array
-
 
 module Vec= Small_vec
 module Matrix = Small_matrix

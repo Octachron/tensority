@@ -1,4 +1,3 @@
-module H = Hexadecimal
 module A = Array
 open Signatures
 let delta = Tensority_misc.delta

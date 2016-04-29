@@ -9,11 +9,15 @@ module Core : sig
   val create : int -> ('a,'b) t
   val to_int : ('a,'b) t -> int
   val magic: ('a,'b) t -> ('c,'d) t
+  val pp: Format.formatter -> ('a,'b) t -> unit
+  val show: ('a,'b) t -> string
 end= struct
   type (+'a,+'b) t = int
   let create n = n
   let to_int n = n
   let magic n = n
+  let pp ppf n = Format.fprintf ppf "%d" n
+  let show = string_of_int
 end
 include Core
 
