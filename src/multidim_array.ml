@@ -125,14 +125,10 @@ let init_sh shape f =
   let size = Shape.physical_size shape in
   let z = Shape.zero shape in
   let array = A.make size @@ f z in
-  {shape; array; stride = Shape.Stride.neutral }
+  let m = {shape; array; stride = Shape.Stride.neutral } in
+  Shape.iter_on shape (fun sh -> m.(sh) <- f sh);
+  m
 
-
-(*
-let init shape f =
-  let m = { shape; array = Array.make (Shape.len shape) (f 0) } in
-  Shape.iter_on (fun sh -> array % f sh )
-*)
 
 let ordinal (nat: 'a Nat.eq) : <elt:'a Nat.lt; shape: 'a Shape.vector > t =
   unsafe_create Shape.([%ll Elt nat]) @@ A.init (Nat.to_int nat) Nat.create
