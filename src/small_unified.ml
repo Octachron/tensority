@@ -7,7 +7,6 @@ type _ t =
     | Scalar: float ref -> < contr:Shape.scalar; cov: Shape.scalar > t
     | Vec: 'a V.t -> < contr: 'a Shape.vector; cov: Shape.scalar > t
     | Matrix: ('a * 'b) M.t -> < contr:'a Shape.vector; cov:'b Shape.vector > t
-    (* | Tensor: 'sh Tensor.t -> 'sh t*)
 
   let scalar f = Scalar f
   let vector n array = Vec(V.create n array)
@@ -21,26 +20,21 @@ type _ t =
     | Scalar x, Scalar y -> Scalar ( ref @@ !x +. !y )
     | Vec x, Vec y -> Vec V.(x + y)
     | Matrix x, Matrix y -> Matrix M.( x + y )
-  (*  | _ -> . *) (*raise @@ Not_implemented "( + )" *)
 
   let (-) (type a)  (x: a t)(y: a t): a t =  match x, y with
     | Scalar x, Scalar y -> Scalar ( ref @@ !x -. !y )
     | Vec x, Vec y -> Vec V.(x - y)
     | Matrix x, Matrix y -> Matrix M.( x - y )
-  (*    | Tensor x, Tensor y -> Tensor T.( x - y) *)
-  (*    | _ -> raise @@ Not_implemented "( - )" *)
 
   let (~-) (type a) (t:a t) : a t = match t with
     | Scalar f -> Scalar ( ref @@ -. !f)
     | Vec v -> Vec V.( - v)
     | Matrix m -> Matrix M.( - m )
-   (* | _ -> raise @@ Not_implemented "( ~- )" *)
 
   let ( |*| ) (type a) (t: a t) (u: a t) = match t, u with
     | Scalar x, Scalar y -> !x *. !y
     | Vec u, Vec v -> V.( u |*| v )
     | Matrix m, Matrix n -> M.( m |*| n )
-  (*| _ -> raise @@ Not_implemented "( |*| )"*)
 
 
   let ( * ) (type a) (type b) (type c)
@@ -71,13 +65,11 @@ type _ t =
     | Scalar x -> Scalar ( ref @@ s *. !x )
     | Vec v -> Vec V.( s *. v )
     | Matrix m -> Matrix M.( s *. m )
-  (*   | _ -> raise @@ Not_implemented "( *. )" *)
 
   let ( /. ) (type a) (t : a t) s : a t  = match t with
     | Scalar x -> Scalar ( ref @@ !x /. s )
     | Vec v -> Vec V.( v /. s )
     | Matrix m -> Matrix M.( m /. s)
-  (*    | _ -> raise @@ Not_implemented "( /. )" *)
 
   end
 
