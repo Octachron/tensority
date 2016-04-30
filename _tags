@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: badfa8f48972d5611b76de73b4c672bd)
+# DO NOT EDIT (digest: ca7216cba5e6de8df12e59d3132ddc54)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -14,14 +14,19 @@ true: annot, bin_annot
 ".git": not_hygienic
 "_darcs": -traverse
 "_darcs": not_hygienic
-# Library tensority-light
-"src/tensority-light.cmxs": use_tensority-light
+# Library tensority
+"src/tensority.cmxs": use_tensority
 <src/*.ml{,i,y}>: pkg_oceti
+# Executable ppx_tensority
+"ppx/ppx_tensority.byte": pkg_compiler-libs.common
+"ppx/ppx_tensority.byte": pkg_ppx_tools.metaquot
+<ppx/*.ml{,i,y}>: pkg_compiler-libs.common
+<ppx/*.ml{,i,y}>: pkg_ppx_tools.metaquot
 # Executable ma
 "examples/ma.byte": pkg_oceti
-"examples/ma.byte": use_tensority-light
+"examples/ma.byte": use_tensority
 <examples/*.ml{,i,y}>: pkg_oceti
-<examples/*.ml{,i,y}>: use_tensority-light
+<examples/*.ml{,i,y}>: use_tensority
 # OASIS_STOP
 <src/tensor.ml>: package(ppx_listlike,ppx_indexop)
 <src/small_*.ml>: package(ppx_listlike,ppx_indexop)

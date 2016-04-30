@@ -12,5 +12,5 @@ let v = unsafe_create [Elt _2] [| 16; 32 |]
 
 let f= [Elt _0i; All]
 
-;; m.[f] <- v
+;; m.[[Elt _0i; All]] <- v
 ;; let m =  v.{ _0i }
