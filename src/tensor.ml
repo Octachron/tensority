@@ -106,8 +106,8 @@ let matrix dim_row dim_col f: ('a,'b) matrix =
           ; incr pos
           )
       ) in
-  { contr=[%ll Elt dim_row]
-  ; cov=[%ll Elt dim_col]
+  { contr=[Elt dim_row]
+  ; cov=[Elt dim_col]
   ; stride = Shape.Stride.neutral
   ; array
   }
@@ -116,12 +116,12 @@ let sq_matrix dim f = matrix dim dim f
 
 let vector (dim:'a Nat.eq) f :' a vec=
   let open Shape in
-  { cov=[%ll]; contr=[%ll Elt dim]; stride = Shape.Stride.neutral;
+  { cov=[]; contr=[Elt dim]; stride = Shape.Stride.neutral;
     array= Nat.ordinal_map f dim }
 
 let vec_dim (vec: 'dim vec) =
   let open Shape in
-  match%with_ll contr_dims vec with
+  match contr_dims vec with
   | [P_elt (_, dim)] -> dim
   | [Elt dim] -> dim
   | _ :: _ :: _ -> .
@@ -131,7 +131,7 @@ module Index = struct
 
   open Shape
 
-  let%with_ll pos_2 stride (v: _ vector l) (_w: _ vector l) r c=
+  let pos_2 stride (v: _ vector l) (_w: _ vector l) r c=
     let core dim_v =
       let open Shape.Stride in
       stride.offset + stride.size * Nat.( to_int r + dim_v * to_int c) in
@@ -140,7 +140,7 @@ module Index = struct
     | [P_elt (dim,_) ] -> core dim
     | _ :: _ :: _ -> .
 
-  let%with_ll pos_3 (type a b) stride (v:(a,b) matrix l) (_w: _ vector l) r c h=
+  let pos_3 (type a b) stride (v:(a,b) matrix l) (_w: _ vector l) r c h=
     let core dim_r dim_c =
       let open Stride in
       stride.offset + stride.size * Nat.( to_int r + dim_r *
@@ -191,7 +191,7 @@ let base dim p =
 
 let endo_dim (mat: ('a,'a) matrix) =
   let open Shape in
-  match%with_ll mat.contr with
+  match mat.contr with
   | [P_elt (_,dim)] -> dim
   | [Elt dim] -> dim
   | _ :: _ :: _ -> .
@@ -378,13 +378,13 @@ end
 let full_up: type left right tl.
   (<l: left; tl:right>, <l:right; tl:tl> ) t -> (<l:left;tl:tl>, 'a Shape.scalar ) t =
   fun t1 ->
-    Shape.{ t1 with contr=t1.contr @ t1.cov; cov = [%ll] }
+    Shape.{ t1 with contr=t1.contr @ t1.cov; cov = [] }
 
 let up1: type left right dim tl tl2.
   (<l: left; tl:dim->tl >, <l:dim -> right; tl:tl2> ) t ->
   (<l:left;tl:tl>,<l:right;tl:tl2> ) t = fun t ->
   let open Shape in
-  match%with_ll t.cov with
+  match t.cov with
   | dim::right -> { t with contr = t.contr @ [dim] ; cov = right }
 *)
 

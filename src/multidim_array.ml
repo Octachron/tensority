@@ -35,7 +35,7 @@ let is_sparse m = Shape.is_sparse m.shape || Shape.Stride.is_neutral m.stride
     let open Shape in
     let open Stride in
     let s = t.stride in
-    match%with_ll t.shape with
+    match t.shape with
     | [Elt dim; _ ] ->
       t.array @? Nat.( s.offset + s.size *( to_int i + to_int j * to_int dim) )
     | [P_elt (phy,_); _ ] ->
@@ -53,7 +53,7 @@ let is_sparse m = Shape.is_sparse m.shape || Shape.Stride.is_neutral m.stride
       in
       t.array @? pos in
     let open Shape in
-    match%with_ll t.shape with
+    match t.shape with
     | [Elt d1; Elt d2; _ ] ->
       get (Nat.to_int d1) (Nat.to_int d2)
     | [P_elt(d1,_); P_elt (d2,_); _ ] -> get d1 d2
@@ -77,7 +77,7 @@ let is_sparse m = Shape.is_sparse m.shape || Shape.Stride.is_neutral m.stride
       let open Shape in
       let open Stride in
       let s = t.stride in
-      match%with_ll t.shape with
+      match t.shape with
       | [Elt dim; _ ] ->
         let pos = s.offset + s.size * Nat.( to_int i + to_int j * to_int dim) in
         t.array % pos =: x
@@ -97,7 +97,7 @@ let is_sparse m = Shape.is_sparse m.shape || Shape.Stride.is_neutral m.stride
       in
       t.array % pos =: x in
     let open Shape in
-    match%with_ll t.shape with
+    match t.shape with
     | [Elt d1; Elt d2; _ ] ->
       set (Nat.to_int d1) (Nat.to_int d2)
     | [P_elt(d1,_); P_elt (d2,_); _ ] -> set d1 d2
@@ -131,7 +131,7 @@ let init_sh shape f =
 
 
 let ordinal (nat: 'a Nat.eq) : <elt:'a Nat.lt; shape: 'a Shape.vector > t =
-  unsafe_create Shape.([%ll Elt nat]) @@ A.init (Nat.to_int nat) Nat.create
+  unsafe_create Shape.[Elt nat] @@ A.init (Nat.to_int nat) Nat.create
 
 let slice s m =
   let stride, shape = Shape.filter ~stride:m.stride m.shape s in
