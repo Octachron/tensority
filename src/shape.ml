@@ -315,6 +315,16 @@ let rec fold: type l. ('a -> int -> 'a) -> 'a -> l eq -> 'a =
   | Elt n::q -> fold f (f acc @@ Nat.to_int n) q
   | P_elt (_,n)::q -> fold f (f acc @@ Nat.to_int n) q
 
+let rec fold_left: type sh. ('a -> sh lt -> 'a ) -> 'a -> sh eq -> 'a =
+  fun f acc -> function
+  | [] -> acc
+  | Elt n::q ->
+    let inner acc n = fold_left (fun acc sh -> f acc (Elt n::sh)) acc q in
+    Nat.fold inner acc n
+  | P_elt (_,n)::q ->
+    let inner acc n = fold_left (fun acc sh -> f acc (Elt n::sh)) acc q in
+    Nat.fold inner acc n
+
 
 let iter_jmp ~up ~down ~f shape =
   let rec iter : type sh. up:(int -> unit) -> down:(int->unit) ->f:(sh lt -> unit)

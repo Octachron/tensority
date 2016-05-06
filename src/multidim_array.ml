@@ -265,6 +265,11 @@ let partial_blit = Sparse.partial_blit
 let%indexop.stringlike get m f = slice f m
 and set to_ filter from = partial_blit ~from ~to_ filter
 
+let find predicate ma =
+  Shape.fold_left (fun l sh ->
+      let x = ma.(sh) in
+      if predicate x then sh :: l else l
+    ) [] ma.shape
 
 
 let rec repeat k ppf s = if k=0 then () else

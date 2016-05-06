@@ -221,6 +221,11 @@ let iter (f:'a lt -> unit) (n:'a eq) : unit =
     f @@ create i
   done
 
+let fold f acc n =
+  let acc = ref acc in
+  iter (fun n -> acc := f !acc n) n;
+  !acc
+
 let (|>?) x f = match x with Some x -> Some(f x) | None -> None
 let (||?) opt x = match opt with Some x -> x | None -> x
 
