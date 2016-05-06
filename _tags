@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: ca7216cba5e6de8df12e59d3132ddc54)
+# DO NOT EDIT (digest: dd9d3ca282accbf4feb676e4d6a68238)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -17,6 +17,8 @@ true: annot, bin_annot
 # Library tensority
 "src/tensority.cmxs": use_tensority
 <src/*.ml{,i,y}>: pkg_oceti
+# Library ppx
+"ppx/ppx.cmxs": use_ppx
 # Executable ppx_tensority
 "ppx/ppx_tensority.byte": pkg_compiler-libs.common
 "ppx/ppx_tensority.byte": pkg_ppx_tools.metaquot

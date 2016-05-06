@@ -13,6 +13,15 @@ Library "tensority"
   Path:   src
   BuildDepends: oceti
   Modules: Tensority_misc, Nat, Signatures, Small_vec, Small_matrix, Small_unified, Small_tensor, Tensor, Shape, Nat_defs, Multidim_array
+  XMETADescription: Multidimensional array and tensor for Ocaml (core library)
+
+Library "ppx"
+  FindlibName: ppx
+  FindlibParent: tensority
+  Path: ppx
+  Modules: Empty
+  XMETADescription: Ppx extension for tensority
+  XMETAExtraLines: ppx = "ppx_tensority"
 
 Executable "ppx_tensority"
   Path: ppx

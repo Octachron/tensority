@@ -1,0 +1,2 @@
+REC
+PKG compiler-libs.common ppx_tools.metaquot
