@@ -1,42 +1,13 @@
-# OASIS_START
-# DO NOT EDIT (digest: dd9d3ca282accbf4feb676e4d6a68238)
-# Ignore VCS directories, you can use the same kind of rule outside
-# OASIS_START/STOP if you want to exclude directories that contains
-# useless stuff for the build process
-true: annot, bin_annot
-<**/.svn>: -traverse
-<**/.svn>: not_hygienic
-".bzr": -traverse
-".bzr": not_hygienic
-".hg": -traverse
-".hg": not_hygienic
-".git": -traverse
-".git": not_hygienic
-"_darcs": -traverse
-"_darcs": not_hygienic
-# Library tensority
-"src/tensority.cmxs": use_tensority
-<src/*.ml{,i,y}>: pkg_oceti
-# Library ppx
-"ppx/ppx.cmxs": use_ppx
-# Executable ppx_tensority
-"ppx/ppx_tensority.byte": pkg_compiler-libs.common
-"ppx/ppx_tensority.byte": pkg_ppx_tools.metaquot
-<ppx/*.ml{,i,y}>: pkg_compiler-libs.common
-<ppx/*.ml{,i,y}>: pkg_ppx_tools.metaquot
-# Executable ma
-"examples/ma.byte": pkg_oceti
-"examples/ma.byte": use_tensority
-<examples/*.ml{,i,y}>: pkg_oceti
-<examples/*.ml{,i,y}>: use_tensority
-# OASIS_STOP
-<src/tensor.ml>: package(ppx_listlike,ppx_indexop)
-<src/small_*.ml>: package(ppx_listlike,ppx_indexop)
-<src/slices.ml>: package(ppx_listlike,ppx_indexop)
-<src/multidim_array.ml>: package(ppx_listlike,ppx_indexop)
+
+<src/tensor.ml>: package(ppx_indexop)
+<src/small_*.ml>: package(ppx_indexop)
+<src/multidim_array.ml>: package(ppx_indexop)
 <src/small_*.mli>: package(ppx_indexop)
 <src/signatures.ml>: package(ppx_indexop)
-<src/shape.ml>:package(ppx_listlike)
-<src/hex_definitions.ml>:package(ppx_literals)
-<examples/*.ml>: package(ppx_listlike)
+
+<examples/*.ml>: ppx_tensority
+
 true: warn(a)
+
+# OASIS_START
+# OASIS_STOP
