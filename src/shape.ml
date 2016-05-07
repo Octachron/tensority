@@ -1,5 +1,6 @@
 
-module N = Natl
+type +'a succ = 'a Nat.succ
+type z = Nat.z
 
 type nil = private Nil
 type dense = private Dense
@@ -8,7 +9,7 @@ type sparse = private Sparse
 type ('l,'n) id = < x:<order:'n;list:'l>; fx: <order:'n; list:'l> >
 type ('a,'l,'n) cons = <
   x: <order:'n; list:'l>;
-  fx: < order:'n N.succ; list:('a -> 'l)> >
+  fx: < order:'n succ; list:('a -> 'l)> >
 
 module Range: sig
   type (+'in_,+'out) t
@@ -61,7 +62,7 @@ end
 
   end
 
-type empty = <n:N.z; list:nil>
+type empty = <n:z; list:nil>
 type ('k1,'k2) empty_2 =
   < k_in:'k1; t_in:empty; t_out:empty; k_out:'k2>
 
@@ -91,7 +92,7 @@ type _ elt =
      fx:
        <
          k_in:'kind;
-         t_in: <n:'n N.succ;list:'nat * 'l>;
+         t_in: <n:'n succ;list:'nat * 'l>;
          t_out:<n:'n2;list: 'l2>;
          k_out:'k;
        >;
@@ -108,7 +109,7 @@ type _ elt =
      fx:
        <
          k_in:Nat.eqm;
-         t_in: <n:'n N.succ;list:'nat * 'l>;
+         t_in: <n:'n succ;list:'nat * 'l>;
          t_out:<n:'n2;list: 'l2>;
          k_out:'k;
        >;
@@ -127,8 +128,8 @@ type _ elt =
         fx:
           <
             k_in:'kin;
-            t_in: <n:'n N.succ;list:'any * 'l>;
-            t_out:<n:'n2 N.succ;list:'any * 'l2>;
+            t_in: <n:'n succ;list:'any * 'l>;
+            t_out:<n:'n2 succ;list:'any * 'l2>;
             k_out:'k;
           >
       >  elt
@@ -143,8 +144,8 @@ type _ elt =
      fx:
        <
          k_in:'k;
-         t_in: <n:'n N.succ;list:'in_ * 'l>;
-         t_out:<n:'n2 N.succ;list: 'out * 'l2>;
+         t_in: <n:'n succ;list:'in_ * 'l>;
+         t_out:<n:'n2 succ;list: 'out * 'l2>;
          k_out:'k2;
        >
         >
@@ -174,10 +175,10 @@ type ('a,'b) s_to_lt = <k_in:Nat.eqm; t_in:'a; t_out:'b; k_out:Nat.ltm> t
 type ('a,'b) s_to_eq = <k_in:Nat.ltm; t_in:'a; t_out:'b; k_out:Nat.eqm> t
 type ('a,'b) s = ('a,'b) s_to_eq
 
-type 'a vector = < n:N.z N.succ; list:'a * nil >
-type ('a,'b) matrix = < n:N.z N.succ N.succ ; list:'a * ('b *  nil) >
-type ('a,'b,'c) t3 = < n:N.z N.succ N.succ N.succ ; list:'a * ('b * ('c *  nil)) >
-type scalar = < n: N.z; list:nil  >
+type 'a vector = < n:z succ; list:'a * nil >
+type ('a,'b) matrix = < n:z succ succ ; list:'a * ('b *  nil) >
+type ('a,'b,'c) t3 = < n:z succ succ succ ; list:'a * ('b * ('c *  nil)) >
+type scalar = < n: z; list:nil  >
 
 let rec order:type sh. sh t -> int = function
   | [] -> 0
@@ -354,7 +355,7 @@ let iter_sep ~up ~down ~sep ~f shape =
   let rec iter: type sh.
     sep:(int -> unit) -> f:(sh lt -> unit) -> level:int -> sh eq -> unit =
     fun ~sep ~f ~level ->
-      let one = Nat_defs.(_1) in
+      let one = Nat.Size.( close @ _1n ) in
       function
       | [] -> f []
       | Elt n :: sh ->

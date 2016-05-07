@@ -1,4 +1,3 @@
-open Range
 module MA = Multidim_array
 module A=Array
 let (@?) = A.unsafe_get
@@ -97,7 +96,7 @@ let reshape t (contr,cov) =
 
 let matrix dim_row dim_col f: ('a,'b) matrix =
   let size = Nat.(to_int dim_row * to_int dim_col) in
-  let array = A.make_float size in
+  let array = A.create_float size in
   let pos = ref 0 in
   let () = (*init*)
     Nat.iter_on dim_row (fun i ->
@@ -256,13 +255,22 @@ let map2 ( <@> ) (t1:'sh t) (t2:'sh t) : 'sh t =
   let array = A.mapi ( fun i x -> x <@> t2.array @? i ) t1.array in
   { t1 with array }
 
+
+let iter_int n kont f =
+  for i = 0 to n - 1 do
+    kont (f i)
+  done
+let (^) = iter_int
+let stop () = ()
+let iter_on f = f
+
 let transpose: < contr:'left; cov:'right > t -> < contr:'right; cov:'left > t =
   fun t1 ->
   let left =  contr_size t1
   and right = cov_size t1 in
   let array = A.make (len t1) 0. in
   let () =
-    iter_on (range left ^ range right) (fun i j ->
+    iter_on (left ^ right ^ stop) (fun i j ->
         t1.array % (i * right + j ) =: t1.array @? (j * right + i)
       ) in
   { array; contr = t1.cov; cov = t1.contr; stride = Shape.Stride.neutral }
@@ -275,20 +283,21 @@ let mult (t1: <contr:'left; cov:'mid> t) (t2: <contr:'mid; cov:'right> t) :
   let l = t1.array and r = t2.array in
   let len = left_dim * right_dim in
   let array = A.make len 0. in
-  iter_on (range left_dim ^ range middle_dim ^ range right_dim) (
-    fun i k j ->
-      let pos = i * right_dim + j in
-      array % pos =:
-      (array @? pos) +.
-      (l @? i * middle_dim + k ) *. (r @? k * right_dim + j)
-  );
+  iter_on (left_dim ^ middle_dim ^ right_dim ^ stop)
+    ( fun i k j ->
+        let pos = i * right_dim + j in
+        array % pos =:
+        (array @? pos) +.
+        (l @? i * middle_dim + k ) *. (r @? k * right_dim + j)
+    );
   {array; contr = t1.contr; cov = t2.cov; stride = Shape.Stride.neutral }
+
 
 
 let full_contraction (t1: <contr:'a; cov:'b> t ) (t2: < contr:'b; cov:'a > t) =
   let left = contr_size t1 and right = cov_size t1 in
   let s = ref 0. in
-  Range.iter_on (range left ^ range right) (fun i j ->
+  iter_on (left ^ right ^ stop) (fun i j ->
       s := !s +. (t1.array @? i + left * j) *. (t2.array @? j + right * i)
     )
   ; !s

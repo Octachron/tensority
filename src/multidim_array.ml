@@ -1,4 +1,3 @@
-open Range
 module A = Array
 exception Dimension_error = Signatures.Dimension_error
 let (%) a n x = A.unsafe_set a n x
