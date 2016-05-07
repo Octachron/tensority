@@ -6,12 +6,12 @@ open Multidim_array
 open Nat_defs
 open Shape
 
-let m = unsafe_create [2k;2k] [| 0; 2; 4; 8|]
+let m = init_sh [100k;100k] ( function [Elt k; Elt l] ->
+    Nat.to_int k + Nat.to_int l | _ :: _ :: _ -> . )
 
-let v = unsafe_create [2k] [| 16; 32 |]
+let v = init_sh [100k] ( fun [Elt k] -> Nat.to_int k)
 
 let f= [ Elt _0i; All]
 
-
-;; m.[1i, All] <- v
+;; m.[ 99i, All ] <- v
 ;; let m =  v.{ 0j }

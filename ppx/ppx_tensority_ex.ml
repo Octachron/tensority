@@ -43,6 +43,8 @@ let var types =
     else
       var_simple ~closed:Closed types
 
+let var_low types =
+  var_simple ~closed:Closed ~lower_bound_opt:[] types
 (*
 let var ?(conjunction=[]) label = variant @@ tag ~conjunction label
 *)
@@ -106,7 +108,7 @@ let ending = var [t; set @@ all @@ T.any () ]
 let rec digits k = if k = 0 then
     ending
   else
-   all (digits @@ k - 1)
+   var_low [ set @@ all (digits @@ k - 1) ]
 
 let rec type_lt_int_aux k len inner =
   let inner d =
@@ -119,7 +121,7 @@ let rec type_lt_int_aux k len inner =
     if d > 1 then
       var @@ set (lep (d-1) (digits @@ 1 + len)) :: l
     else
-      var l
+      var_low l
   in
   if k < 10 then
       inner k
@@ -131,7 +133,7 @@ let type_lt_int k =
   if k = 0 then
     ending
   else
-    type_lt_int_aux k 0 (all @@ ending)
+    type_lt_int_aux k 0 (var_low [ set @@ all @@ ending ] )
 
 let lt_int loc k =
   shape_expr loc lt (type_lt_int k) (int_expr k)
