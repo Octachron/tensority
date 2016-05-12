@@ -2,6 +2,13 @@ open Parsetree
 module H = Ast_helper
 module T = H.Typ
 
+type tensor_kind = { fn: Parsetree.expression; name:string }
+let ma =
+  { fn = [%expr Multidim_array.unsafe_create]; name = "array" }
+let tensor =
+  { fn = [%expr Tensor.unsafe_create]; name = "tensor" }
+
+
 type label = Asttypes.label
 type closed_flag = Asttypes.closed_flag = Closed | Open
 
@@ -95,6 +102,10 @@ let type_size_int loc n = type_size_int_rec loc n @@ var loc [t]
 let eq_int loc n =
   shape_expr loc eq (type_size_int loc n) (int_expr loc n)
 
+let eq_nat loc n =
+  nat_expr loc eq (type_size_int loc n) (int_expr loc n)
+
+
 let ($) f ts = T.constr f ts
 
 let gtp loc k t =
@@ -123,7 +134,7 @@ let rec type_lt_int_aux loc k len inner =
       else
         l
     in
-    if d > 1 then
+    if d > 0 then
       var loc @@ set (lep loc (d-1) @@ digits loc @@ 1 + len) :: l
     else
       var_low loc l
@@ -143,20 +154,24 @@ let type_lt_int loc k =
 let lt_int loc k =
   shape_expr loc lt (type_lt_int loc k) (int_expr loc k)
 
+let lt_nat loc k =
+  nat_expr loc lt (type_lt_int loc k) (int_expr loc k)
 
-let expect_int = function
+let expect_int name = function
   | { pexp_desc = Pexp_constant Pconst_integer(n, None) } ->
     int_of_string n
-  | e -> error e.pexp_loc "[%%tensor] expected an integer as second argument"
+  | e -> error e.pexp_loc "[%%%s] expected an integer as first argument"
+           name
 
 let constant loc super =function
   | Pconst_integer (n,Some m ) ->
     begin
+      let n = int_of_string n in
       match m with
-      | 'k' | 's' -> eq_int loc @@ int_of_string n
-      | 'i' -> lt_int loc @@ int_of_string n
-      | 'j' -> let n = int_of_string n in
-        nat_expr loc lt (type_lt_int loc n) (int_expr loc n)
+      | 'k' -> eq_nat loc n
+      | 's' -> eq_int loc n
+      | 'i' -> lt_int loc n
+      | 'j' -> lt_nat loc n
       | _ -> super
     end
   | _ ->  super
@@ -203,7 +218,7 @@ type 'a nested_list =
   | Elt of 'a
   | Nested of 'a nested_list loc * 'a nested_list loc list
 
-let rec extract_nested loc level e =
+let rec extract_nested ({name} as k) loc level e =
   if level = 0 then
     mkloc ~loc @@ Elt e
   else
@@ -213,21 +228,22 @@ let rec extract_nested loc level e =
         | [%expr [%e? a]; [%e? b] ] ->
           e.pexp_loc, a, extract_sequence b
         | e ->  error e.pexp_loc
-                  "[%%tensor] invalid input: [%%tensor] was\
-                   expecting a list of semi-colon separated %d-tensors" level
+                  "[%%%s] invalid input: a list of semi-colon separated %d-tensors\
+                   was expected"
+                  name level
       else
         match e with
         | {pexp_desc = Pexp_tuple (a::q) ; _ } as e -> e.pexp_loc, a, q
         | e -> error e.pexp_loc
-                 "[%%tensor] invalid input: [%%tensor] was \
-                  expecting a list of comma separated %d-tensors" level
+                 "[%%%s] invalid input: a list of comma separated %d-tensors\
+                 was expected" name level
     in
-    let extr e =  extract_nested loc (level - 1) e  in
+    let extr e =  extract_nested k loc (level - 1) e  in
     mkloc ~loc @@ Nested( extr a, List.map extr q)
 
 let apply_loc f x = Location.( (f x.txt).txt )
 
-let rec compute_and_check_shape loc level =
+let rec compute_and_check_shape kind loc level =
   let error_ppx = error in
   let open Location in
   function
@@ -235,12 +251,13 @@ let rec compute_and_check_shape loc level =
   | { txt = Nested (a,q) } ->
     let n = 1 + List.length q in
     let shape0 =
-      compute_and_check_shape a.loc (level - 1) a in
+      compute_and_check_shape kind a.loc (level - 1) a in
     let test (e:_ loc) =
-      shape0 = compute_and_check_shape e.loc (level - 1) e in
+      shape0 = compute_and_check_shape kind e.loc (level - 1) e in
     if List.for_all test q
     then n :: shape0
-    else error_ppx loc "[%%tensor]: non-valid sub-tensor shape at level %d" level
+    else error_ppx loc "[%%%s]: non-valid sub-tensor shape at level %d"
+        kind.name level
 
 let rec flatten_nested n l =
   let open Location in
@@ -250,16 +267,56 @@ let rec flatten_nested n l =
     flatten_nested a@@
     List.fold_right flatten_nested q l
 
-let create_tensor loc level e =
-  let nested = extract_nested loc level e in
-  let shape_int = compute_and_check_shape loc level nested in
+
+let create_array loc level e =
+  let kind = ma in
+  let nested = extract_nested kind loc level e in
+  let shape_int = compute_and_check_shape kind loc level nested in
   let l = flatten_nested nested [] in
   let shape = to_list loc @@ List.map (eq_int loc) shape_int in
   let array = H.Exp.array ~loc l in
-  [%expr unsafe_create [%e shape] [%e array] ]
+  [%expr [%e kind.fn] [%e shape] [%e array] ]
+
+let rec split n l =
+  if n = 0 then [], l else
+    match l with
+    | a :: q ->
+      let left, right = split (n-1) q in
+      a :: left, q
+    | [] -> raise (Invalid_argument (Printf.sprintf "split %d [] is not valid" n))
+
+let create_tensor loc ~contr ~cov e =
+  let kind = tensor in
+  let level = contr + cov in
+  let nested = extract_nested kind loc level e in
+  let shape_int = compute_and_check_shape kind loc level nested in
+  let l = flatten_nested nested [] in
+  let contr, cov  = split contr shape_int in
+  let shape l = to_list loc @@ List.map (eq_int loc) l in
+  let array = H.Exp.array ~loc l in
+  [%expr [%e kind.fn] ~contr:[%e shape contr] ~cov:[%e shape cov] [%e array] ]
 
 let default = Ast_mapper.default_mapper
 open Ast_mapper
+
+let range loc ?by start stop =
+  let int = expect_int "range" in
+  let start = int start and stop = 1 + int stop in
+  let step = match by with Some step -> int step | None -> 1 in
+  if stop < start then
+    error loc "[%%range]: invalid argument start indice %d > stop indice %d"
+      start stop
+  else if step <= 0 then
+    error loc "[%%range]: invalid argument step %d ≤ 0"
+      step
+  ; let len = 1 + (stop - start) / step in
+    let start = lt_nat loc start and stop = lt_nat loc stop
+    and len = eq_nat loc len and step = int_expr loc step in
+    [%expr Shape.Range(
+           Shape.Range.create
+             ~start:[%e start] ~stop:[%e stop] ~step:[%e step] ~len:[%e len]
+         )
+    ][@metaloc loc]
 
 let expr mapper = function
   | {pexp_desc = Pexp_constant c;  _ } as e ->
@@ -273,10 +330,25 @@ let expr mapper = function
     let i = index_rewriter (mapper.expr mapper) i in
     let v = default.expr mapper v in
     [%expr [%e a].[[%e i]]<- [%e v] ][@metaloc e.pexp_loc]
+  | [%expr [%array [%e? n] [%e? array] ] ] as e ->
+    create_array e.pexp_loc (expect_int ma.name n) array
+  | [%expr [%array [%e? array] ] ] as e ->
+    create_array e.pexp_loc 1 array
+  | [%expr [%tensor [%e? contr] [%e? cov] [%e? array] ] ] as e ->
+    create_tensor e.pexp_loc
+      ~contr:(expect_int tensor.name contr)
+      ~cov:(expect_int tensor.name cov)
+      array
+  | [%expr [%tensor [%e? array] ] ] as e ->
+    create_tensor e.pexp_loc ~contr:1 ~cov:0 array
+  | [%expr [%range [%e? start] -- [%e? stop] ~by:[%e? step] ] ] as e
+  | ( [%expr [%e? start] #-># [%e? stop] #/# [%e? step] ] as e ) ->
+    range e.pexp_loc ~by:step start stop
+  | [%expr [%range [%e? start] -- [%e? stop] ] ] as e
+  | ([%expr [%e? start] #-># [%e? stop] ] as e) ->
+    range e.pexp_loc start stop
   | [%expr [%vec [%e? t] ] ] as e ->
     vec e.pexp_loc t
-  | [%expr [%tensor [%e? n] [%e? array] ] ] as e ->
-    create_tensor e.pexp_loc (expect_int n) array
   | e -> default.expr mapper e
 
 let mapper arg = Ast_mapper.{ default_mapper with expr }
