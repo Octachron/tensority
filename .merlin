@@ -3,3 +3,4 @@ S src/**
 B _build/**
 S examples/*
 PKG ppx_indexop oceti compiler-libs
+FLG -w A-44-42-45-40-4-41
