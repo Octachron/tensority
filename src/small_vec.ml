@@ -43,7 +43,7 @@ let typed_dim (v: 'a t) : 'a Nat.eq = Nat.create @@ dim v
 let map f v = Array.map f v
 
 let map_nat f v =
-  let a = Array.make_float (dim v) in
+  let a = Array.create_float (dim v) in
   Nat.iter_on (typed_dim v) (fun k -> A.unsafe_set a (Nat.to_int k) @@
                             f k @@ A.unsafe_get a @@ Nat.to_int k );
   a

@@ -193,7 +193,6 @@ module Sparse = struct
   let iter f m =
     Shape.iter (fun sh -> f m.(sh)) m.shape
 
-
   let iter_sh f m =
     Shape.iter (fun sh -> f sh m.(sh)) m.shape
 
@@ -257,7 +256,7 @@ let fold_all_left f acc m =
       f acc m
 
 let partial_copy ?(deep_copy=fun x -> x) s m =
-  Sparse.copy @@ slice s m
+  Sparse.copy ~deep_copy @@ slice s m
 
 let partial_blit = Sparse.partial_blit
 

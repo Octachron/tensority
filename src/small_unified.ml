@@ -12,8 +12,6 @@ type _ t =
   let vector n array = Vec(V.create n array)
   let matrix n m array = Matrix(M.create n m array)
 
-  exception Not_implemented of string
-
   module Operators = struct
 
   let (+) (type a) (x:a t) (y:a t): a t =  match x, y with
@@ -47,7 +45,7 @@ type _ t =
 
 
   let one (type a): <contr:a;cov:a> t -> <contr:a;cov:a> t = function
-    | Scalar f -> Scalar(ref 1.)
+    | Scalar _ -> Scalar(ref 1.)
     | Matrix m -> Matrix M.(id @@ fst @@ typed_dims m)
 
   let ( **^ ) (type a) (t: <contr:a; cov:a> t) k =
@@ -77,7 +75,7 @@ type _ t =
     let get: type a b. <contr:a; cov:b> t -> (a Shape.lt * b Shape.lt)
       -> float = fun t (contr,cov) ->
       let open Shape in
-      match t, contr, cov with
+      match[@warning "-4"] t, contr, cov with
       | Scalar f, [] , [] -> !f
       | Vec v, [Elt a], [] -> V.( v.(a) )
       | Matrix m, [Elt i], [Elt j] -> M.( m.(i,j) )
@@ -86,7 +84,7 @@ type _ t =
     and set: type a b. <contr:a; cov:b> t -> (a Shape.lt * b Shape.lt) -> float -> unit
       = fun t (contr,cov) x ->
         let open Shape in
-        match t, contr, cov with
+        match[@warning "-4"] t, contr, cov with
         | Scalar f, [] , [] -> f := x
         | Vec v, [Elt a] ,  [] -> V.( v.(a) <- x )
         | Matrix m, [Elt i], [Elt j] -> M.( m.(i,j) <- x )

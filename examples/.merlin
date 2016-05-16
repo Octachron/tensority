@@ -1,0 +1,2 @@
+REC
+FLG -ppx ../ppx_tensority_ex.native

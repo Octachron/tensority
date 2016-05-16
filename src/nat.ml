@@ -137,7 +137,6 @@ end
 module Adder = struct
 
   module K = struct type 'a k='a end
-  open K
 
   let make n = 10, create n
   type (+'a,+'any) b = int * ('a * 'any1 at_least_1 * nz, 'any2 lem) t
@@ -214,7 +213,7 @@ let if_ opt f g = match opt with
   | Some x -> f x
   | None -> g ()
 
-let (%?):  ('a,[`Lt]) t -> ('a,[`Eq]) t -> ('a,[`Lt]) t = fun x y -> x
+let (%?):  ('a,[`Lt]) t -> ('a,[`Eq]) t -> ('a,[`Lt]) t = fun x _y -> x
 
 let iter (f:'a lt -> unit) (n:'a eq) : unit =
   for i = 0 to (to_int n - 1) do
@@ -284,7 +283,7 @@ let certified_adder: 'inf eq -> 'diff eq -> 'sup eq ->
     if to_int inf + to_int diff <> to_int sup then
       raise Type_level_integer_error
     else
-      fun base diff -> create @@ to_int base + to_int sup
+      fun base diff -> create @@ to_int base + to_int diff
 
 module Dynamic(D: sig val dim: int end)= struct
   type t = private T

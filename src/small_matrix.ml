@@ -9,7 +9,7 @@ let ( =: ) = (@@)
 type 'a t = {lines: 'b Nat.eq; array:float array}
   constraint 'a = 'b * 'c
 
-let unsafe_create (lines:'a Nat.eq) (rows: 'b Nat.eq) array: ('a * 'b) t =
+let unsafe_create (lines:'a Nat.eq) ( _ : 'b Nat.eq) array: ('a * 'b) t =
   { lines; array}
 
 let create l r a =
@@ -20,7 +20,7 @@ let create l r a =
 
 let init lines (rows:' b Nat.eq) f : ('a * 'b) t =
   let nl = Nat.to_int lines and nr = Nat.to_int rows in
-  let array = A.make_float (nl * nr ) in
+  let array = A.create_float (nl * nr ) in
   let pos = ref 0 in
   for j = 0 to nr - 1 do
     for i = 0 to nl - 1 do
@@ -78,13 +78,13 @@ let diag v =
 let id dim = square dim init delta
 
 let transpose (mat:('a *' b) t) : ('b * 'a ) t =
-  let array = Array.make_float (size mat) in
+  let array = Array.create_float (size mat) in
   let l, r = dims mat in
   let lines = Nat.create @@ r in
   let dir = ref 0 and tr = ref 0 in
   for j = 0 to r - 1 do
     tr := j;
-    for i = 0 to l - 1 do
+    for _i = 0 to l - 1 do
       array % !tr @@ array @? !dir;
       incr dir;
       tr := !tr + l

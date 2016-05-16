@@ -44,12 +44,23 @@ let is_sparse t = Shape.(
     not(Stride.is_neutral t.stride) || is_sparse t.contr || is_sparse t.cov
   )
 
-let create ~contr ~cov const=
+let full = Shape.Stride.neutral
+
+let unsafe_create ?(stride=full) ~contr ~cov array =
+  let len = (Shape.physical_size cov) * (Shape.physical_size contr) in
+  let len' = A.length array in
+  if len <> len' then
+    raise @@ Signatures.Dimension_error( "Tensor.unsafe_create", len, len' )
+  ; {cov;contr; array=A.make len 0.; stride  }
+[@@warning "-32"]
+
+let const ~contr ~cov x=
   let cov = Shape.detach cov and contr = Shape.detach contr in
   let len = (Shape.physical_size cov) * (Shape.physical_size contr) in
-  {cov;contr; array=A.make len 0.; stride = Shape.Stride.neutral }
+  {cov;contr; array=A.make len x; stride = full }
 
-let zero ~contr ~cov = create ~contr ~cov  0.
+
+let zero ~contr ~cov = const ~contr ~cov  0.
 
 let init_sh f ~contr ~cov =
   let r = zero ~contr ~cov in
@@ -67,7 +78,7 @@ let pp ppf t =
       | 0 -> Format.fprintf ppf ",@ "
       | 1 -> Format.fprintf ppf ";@ "
       | 2 -> Format.fprintf ppf "@,"
-      | n ->  Format.fprintf ppf "@," in
+      | _n ->  Format.fprintf ppf "@," in
   let up _ = Format.fprintf ppf "@["
   and down _ = Format.fprintf ppf "@]" in
   let pp_scalar ppf x= Format.fprintf ppf "%f" x in
@@ -107,7 +118,7 @@ let matrix dim_row dim_col f: ('a,'b) matrix =
       ) in
   { contr=[Elt dim_row]
   ; cov=[Elt dim_col]
-  ; stride = Shape.Stride.neutral
+  ; stride = full
   ; array
   }
 
@@ -115,7 +126,7 @@ let sq_matrix dim f = matrix dim dim f
 
 let vector (dim:'a Nat.eq) f :' a vec=
   let open Shape in
-  { cov=[]; contr=[Elt dim]; stride = Shape.Stride.neutral;
+  { cov=[]; contr=[Elt dim]; stride = full;
     array= Nat.ordinal_map f dim }
 
 let vec_dim (vec: 'dim vec) =
@@ -207,7 +218,7 @@ module Sparse = struct
   ; tt
 
   let mult t1 t2 =
-    let r = zero t1.contr t2.cov in
+    let r = zero ~contr:t1.contr ~cov:t2.cov in
     Shape.iter_on t1.contr (fun i ->
         Shape.iter_on t1.cov (fun k ->
             Shape.iter_on t2.cov ( fun j ->
@@ -273,7 +284,7 @@ let transpose: < contr:'left; cov:'right > t -> < contr:'right; cov:'left > t =
     iter_on (left ^ right ^ stop) (fun i j ->
         t1.array % (i * right + j ) =: t1.array @? (j * right + i)
       ) in
-  { array; contr = t1.cov; cov = t1.contr; stride = Shape.Stride.neutral }
+  { array; contr = t1.cov; cov = t1.contr; stride = full }
 
 let mult (t1: <contr:'left; cov:'mid> t) (t2: <contr:'mid; cov:'right> t) :
   <contr:'left; cov:'right> t =
@@ -290,7 +301,7 @@ let mult (t1: <contr:'left; cov:'mid> t) (t2: <contr:'mid; cov:'right> t) :
         (array @? pos) +.
         (l @? i * middle_dim + k ) *. (r @? k * right_dim + j)
     );
-  {array; contr = t1.contr; cov = t2.cov; stride = Shape.Stride.neutral }
+  {array; contr = t1.contr; cov = t2.cov; stride = full }
 
 
 
@@ -399,7 +410,7 @@ let up1: type left right dim tl tl2.
 
 let copy t =
   if is_sparse t then
-  create ~contr:t.contr ~cov:t.cov
+  init_sh ~contr:t.contr ~cov:t.cov
     ( fun i j -> t.(i,j) )
   else
     { t with array = A.copy t.array }
@@ -417,7 +428,7 @@ let partial_copy t (f1,f2) =
     )  t.cov f2
 
 let slice t (f1,f2) =
-  let final_stride, cov = Shape.filter ~stride:(Shape.Stride.neutral) t.cov f2 in
+  let final_stride, cov = Shape.filter ~stride:full t.cov f2 in
   let stride, contr = Shape.filter ~stride:t.stride ~final_stride t.contr f1 in
   { t with contr; cov; stride }
 

@@ -37,3 +37,9 @@ Executable "ma"
   MainIs: ma.ml
   BuildDepends: tensority, tensority.ppx
   Install: false
+
+Executable "linalg"
+  Path: examples
+  MainIs: linalg.ml
+  BuildDepends: tensority, tensority.ppx
+  Install: false
