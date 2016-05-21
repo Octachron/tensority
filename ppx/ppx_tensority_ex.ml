@@ -18,7 +18,7 @@ let mkloc ~loc txt = Location.{txt; loc }
 let error loc ?sub ?if_highlight format  =
   Format.ksprintf (fun msg ->
       raise Location.( Error (error ?sub ?if_highlight ~loc msg)))
-    format
+    ("ppx_tensority:" ^^ format)
 
 
 module Lid = struct
@@ -70,11 +70,17 @@ module Expr = struct
     | a :: q -> H.Exp.sequence ~loc a (sequence loc q)
     | _ -> assert false
 
-  let rec extract_sequence =function[@warning "-4"]
+  let rec extract_sequence =function
   | [%expr [%e? h]; [%e? r] ] -> h :: (extract_sequence r)
   | e -> [e]
 
-  let rec to_list loc = function[@warning "-4"]
+  let rec extract_list =function
+  | [%expr [%e? h] :: [%e? r] ] -> h :: (extract_list r)
+  | [%expr [] ] -> []
+  | e -> error e.pexp_loc "wrong kind of expression, a list was expected"
+
+
+  let rec to_list loc = function
   | [] -> [%expr [] ][@metaloc loc]
   | [e] -> [%expr [[%e e]] ][@metaloc loc]
   | a::q -> [%expr [%e a]::[%e to_list loc q] ][@metaloc loc]
@@ -88,6 +94,7 @@ let to_label n = "_" ^ string_of_int n
 let t = Polyvar.tag ~empty_type:true "T"
 let eq = [%type: eqm]
 let lt = [%type: ltm]
+let le = [%type: _ lem ]
 
 module Expr = struct
   let nat loc kind typ value =
@@ -219,22 +226,22 @@ end
     end
 
     let int loc k =
-      Expr.shape loc lt (Type.int loc k) (Expr.int loc k)
+      Expr.shape loc le (Type.int loc k) (Expr.int loc k)
 
     let nat loc k =
-      Expr.nat loc lt (Type.int loc k) (Expr.int loc k)
+      Expr.nat loc le (Type.int loc k) (Expr.int loc k)
   end
 
 
 end
 
-let expect_int name = function[@warning "-4"]
+let expect_int name = function
   | { pexp_desc = Pexp_constant Pconst_integer(n, None); _  } ->
     int_of_string n
   | e -> error e.pexp_loc "[%%%s] expected an integer as first argument"
            name
 
-let constant loc super =function[@warning "-4"]
+let constant loc super =function
   | Pconst_integer (n,Some m ) ->
     begin
       let n = int_of_string n in
@@ -251,7 +258,7 @@ let constant loc super =function[@warning "-4"]
 
 module Index = struct
 
-  let rewrite_tuples kont = function[@warning "-4"]
+  let rewrite_tuples kont = function
   | {pexp_desc = Pexp_tuple l; _ } as e ->
     Expr.to_list e.pexp_loc @@ List.map kont l
   | e -> Expr.to_list e.pexp_loc [ kont e ]
@@ -266,7 +273,7 @@ module Index = struct
   let rewriter mapper =
   let open Ast_mapper in
   let map = mapper.expr mapper in
-  function[@warning "-4"]
+  function
   | [%expr [%e? i ]; __ ] ->
     [%expr [%e rewrite_tuples map i], []][@metaloc i.pexp_loc]
   | [%expr __ ; [%e? i ] ] ->
@@ -277,7 +284,7 @@ end
 
 module Array_lit = struct
 
-  let vec loc = function[@warning "-4"]
+  let vec loc = function
   | { pexp_desc = Pexp_tuple s; _ } as e ->
     let a = {e with pexp_desc = Pexp_array s} in
     let nat = Ints.Eq.int loc @@ List.length s in
@@ -296,11 +303,13 @@ module Array_lit = struct
       let loc, a, q =
         if level mod 2 = 0 then
           match e with
-          | [%expr [%e? a]; [%e? b] ] ->
-            e.pexp_loc, a, Expr.extract_sequence b
-        | e ->  error e.pexp_loc
-                  "[%%%s] invalid input: a list of semi-colon separated %d-tensors\
-                   was expected"
+          | [%expr [%e? a] :: [%e? b] ] ->
+            e.pexp_loc, a, Expr.extract_list b
+          | [%expr [] ] -> error e.pexp_loc
+                             "[%%%s] invalid input: a non-empty list was expected"
+                  name level
+            | e ->  error e.pexp_loc
+                  "[%%%s] invalid input: a list of %d-tensors was expected"
                   name level
       else
         match e with
@@ -395,7 +404,7 @@ let range loc ?by start stop =
 let index_access kont mapper =
   let map_std = default.expr mapper in
   let map a i = map_std a, Index.rewriter mapper i in
-  function[@warning "-4"]
+  function
   | [%expr [%e? a].[ [%e? i] ] ] as e ->
     let a, i = map a i in
     [%expr [%e a].[ [%e i]] ][@metaloc e.pexp_loc]
@@ -407,7 +416,7 @@ let index_access kont mapper =
 let index_assign kont mapper =
   let map_std a = default.expr mapper a in
   let map a i v = map_std a, Index.rewriter mapper i, map_std v in
-  function[@warning "-4"]
+  function
   | [%expr [%e? a].[[%e? i] ] <- [%e? v] ] as e ->
     let a,i, v = map a i v in
     [%expr [%e a].[[%e i]]<- [%e v] ][@metaloc e.pexp_loc]
@@ -416,12 +425,12 @@ let index_assign kont mapper =
     [%expr [%e a].[[%e i]]<- [%e v] ][@metaloc e.pexp_loc]
   | e -> kont mapper e
 
-let const_mapper kont mapper = function[@warning "-4"]
+let const_mapper kont mapper = function
   | {pexp_desc = Pexp_constant c;  _ } as e ->
     constant e.pexp_loc e c
   | e -> kont mapper e
 
-let array_mapper kont mapper = function[@warning "-4"]
+let array_mapper kont mapper = function
   | [%expr [%array [%e? n] [%e? array] ] ] as e ->
     Array_lit.array e.pexp_loc (expect_int ma.name n) array
   | [%expr [%array [%e? array] ] ] as e ->
@@ -429,7 +438,7 @@ let array_mapper kont mapper = function[@warning "-4"]
   | e -> kont mapper e
 
 let tensor_mapper kont mapper=
-function[@warning "-4"]
+function
   | [%expr [%tensor [%e? contr] [%e? cov] [%e? array] ] ] as e ->
     Array_lit.tensor e.pexp_loc
       ~contr:(expect_int tensor.name contr)
@@ -441,7 +450,7 @@ function[@warning "-4"]
     Array_lit.tensor e.pexp_loc ~contr:1 ~cov:1 array
   | e -> kont mapper e
 
-let range_mapper kont mapper = function[@warning "-4"]
+let range_mapper kont mapper = function
   | [%expr [%range [%e? start] [%e? stop] ~by:[%e? step] ] ] as e
   | ( [%expr [%e? start] #-># [%e? stop] #/# [%e? step] ] as e ) ->
     range e.pexp_loc ~by:step start stop

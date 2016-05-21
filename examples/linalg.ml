@@ -3,8 +3,8 @@ open Shape
 
 let rotation theta =
   [%matrix
-    ( cos theta, -.sin theta ;
-      sin theta,   cos theta )
+    [ cos theta, -.sin theta ;
+      sin theta,   cos theta ]
   ]
 
 let m = rotation 1.
