@@ -12,8 +12,7 @@ build: [
   [make]
 ]
 install: [make "install"]
-remove: ["ocamlfind" "remove" "tensority-light"]
+remove: ["ocamlfind" "remove" "tensority"]
 depends: [
-  "oceti"
   "ocamlfind" {build} "oasis" {build}
 ]
