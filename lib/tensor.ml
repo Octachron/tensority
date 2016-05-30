@@ -7,7 +7,7 @@ let (=:) = (@@)
 
 type 'x t =  { contr:'a Shape.eq
              ; cov:'b Shape.eq
-             ; stride:Shape.Stride.t
+             ; stride:Stride.t
              ; array : float array
              }
   constraint 'x = < contr:'a; cov:'b >
@@ -44,7 +44,7 @@ let is_sparse t = Shape.(
     not(Stride.is_neutral t.stride) || is_sparse t.contr || is_sparse t.cov
   )
 
-let full = Shape.Stride.neutral
+let full = Stride.neutral
 
 let unsafe_create ?(stride=full) ~contr ~cov array =
   let len = (Shape.physical_size cov) * (Shape.physical_size contr) in
@@ -143,7 +143,7 @@ module Index = struct
 
   let pos_2 stride (v: _ vector l) (_w: _ vector l) r c=
     let core dim_v =
-      let open Shape.Stride in
+      let open Stride in
       stride.offset + stride.size * Nat.( to_int r + dim_v * to_int c) in
     match v with
     | [Elt nat] -> core @@ Nat.to_int nat
@@ -166,7 +166,7 @@ end
 
 ;; [%%indexop
 let get_1: 'a vec -> 'a Nat.lt -> float =
-  fun t n -> t.array @? Shape.Stride.(t.stride.offset + t.stride.size * Nat.to_int n)
+  fun t n -> t.array @? Stride.(t.stride.offset + t.stride.size * Nat.to_int n)
 
 let set_1: 'a vec -> 'a Nat.lt -> float -> unit =
   fun t n -> t.array % Nat.to_int n

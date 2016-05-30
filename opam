@@ -5,14 +5,10 @@ maintainer: "octachron <octa@polychoron.fr>"
 authors:"octachron <octa@polychoron.fr>"
 homepage: ""
 bug-reports: ""
-license: "LGPL 3+ + Ocaml linking exception"
-build: [
-  [ "oasis" "setup" ]
-  ["./configure" "--prefix=%{prefix}%"]
-  [make]
-]
-install: [make "install"]
+license: "GPL 3+"
+build: [[ "ocaml" "pkg/pkg.ml" "build"
+ "--installer" "true" ]]
 remove: ["ocamlfind" "remove" "tensority"]
 depends: [
-  "ocamlfind" {build} "oasis" {build}
+ocamlbuild {build} ocamlfind {build} topkg {build} ppx_indexop {build}
 ]

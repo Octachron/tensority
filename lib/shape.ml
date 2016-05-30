@@ -9,73 +9,10 @@ type ('a,'l,'n) cons = <
   x: <order:'n; list:'l>;
   fx: < order:'n succ; list:('a -> 'l)> >
 
-module Range: sig
-  type (+'in_,+'out) t
-  val create: start:'a Nat.lt -> stop: 'a Nat.lt -> step:int -> len:'b Nat.eq
-    -> ('a,'b) t
-  val start: ('a,_) t -> 'a Nat.lt
-  val stop: ('a,_) t -> 'a Nat.lt
-  val step: _ t -> int
-  val len: (_,'b) t -> 'b Nat.eq
-  val compose: ('a,'b) t -> ('b,'c) t -> ('a,'c) t
-  val transpose: ('a,'b) t -> 'b Nat.lt -> 'a Nat.lt
-  val (--): 'a Nat.lt -> 'a Nat.lt -> 'b Nat.eq -> ('a,'b) t
-  val (-->): 'a Nat.lt -> 'a Nat.lt -> (int * 'b Nat.eq) -> ('a,'b) t
-  val pp: Format.formatter -> ('a,'b) t -> unit
-  val show: ('a,'b) t -> string
-end
-  = struct
-  type ('n_in, 'n_out) t = { start:int; stop:int; step:int }
-  let create ~start ~stop ~step ~len =
-    let diff = Nat.to_int stop - Nat.to_int start in
-    let dyn_len = diff / step and len = Nat.to_int len in
-    if len <> dyn_len then
-      raise @@ Signatures.Dimension_error
-        ("Slices.range.create", dyn_len , len )
-    else
-      {start= Nat.to_int start ; stop= Nat.to_int stop; step }
-
-  let start r = Nat.create r.start
-  let stop r = Nat.create r.stop
-  let step r = r.step
-  let len r = Nat.create @@ (r.stop - r.start) / r.step
-  let compose r1 r2 =
-    { start = r1.start + r2.start
-    ; stop = r1.start + r2.stop
-    ; step = r1.step * r2.step
-    }
-  let transpose r p = Nat.create @@ r.start + r.step * Nat.to_int p
-
-  let (--) start stop len = create ~start ~stop ~len ~step:1
-  let (-->) start stop (step,len) = create ~start ~stop ~len ~step
-
-  let pp ppf r =
-    Format.fprintf ppf "@[[%a->%a by %d (%a)]@]"
-      Nat.pp (start r) Nat.pp (stop r)
-      (step r)
-      Nat.pp (len r)
-
-  let show r=
-    Format.asprintf "%a" pp r
-
-  end
-
 type empty = <n:z; list:nil>
 type ('k1,'k2) empty_2 =
   < k_in:'k1; t_in:empty; t_out:empty; k_out:'k2>
 
-module Stride = struct
-type t = {offset:int; size:int}
-type stride = t
-
-let ($) stride {size;offset} =
-  { size = stride.size * size; offset = stride.offset + stride.size * offset }
-let neutral = { size = 1; offset = 0 }
-let is_neutral = (=) neutral
-
-let offset s = { s with size = 1 }
-
-end
 
 type _ elt =
   | Elt: ('nat,'kind) Nat.t ->

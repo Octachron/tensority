@@ -4,11 +4,11 @@ let (%) a n x = A.unsafe_set a n x
 let (=:) = (@@)
 let (@?) a n = A.unsafe_get a n
 
-type 'x t = { shape: 'sh Shape.l; stride: Shape.Stride.t; array: 'elt array }
+type 'x t = { shape: 'sh Shape.l; stride: Stride.t; array: 'elt array }
   constraint 'x = <shape:'sh; elt:'elt>
 
 let size m = Shape.logical_size m.shape
-let is_sparse m = Shape.is_sparse m.shape || Shape.Stride.is_neutral m.stride
+let is_sparse m = Shape.is_sparse m.shape || Stride.is_neutral m.stride
 
 [%%indexop.arraylike
   let get: <shape:'sh; elt:'elt> t -> 'sh Shape.lt -> 'elt = fun t indices ->
@@ -26,7 +26,7 @@ let is_sparse m = Shape.is_sparse m.shape || Shape.Stride.is_neutral m.stride
 [%%indexop
   let get_1: type nat. <shape:nat Shape.vector; elt:'elt> t
     -> nat Nat.lt -> 'elt = fun t nat ->
-    let open Shape.Stride in
+    let open Stride in
     t.array @? ( t.stride.offset + t.stride.size * Nat.to_int nat )
 
   let get_2: type a b. <shape: (a,b) Shape.matrix; elt:'elt> t
@@ -44,7 +44,7 @@ let is_sparse m = Shape.is_sparse m.shape || Shape.Stride.is_neutral m.stride
 
   let get_3: type a b c. <shape: (a,b,c) Shape.t3; elt:'elt> t
     -> a Nat.lt -> b Nat.lt -> c Nat.lt -> 'elt = fun t i j k ->
-    let open Shape.Stride in
+    let open Stride in
     let s = t.stride in
     let get d1 d2 =
       let pos =
@@ -66,7 +66,7 @@ let is_sparse m = Shape.is_sparse m.shape || Shape.Stride.is_neutral m.stride
 
     let set_1: type nat. <shape:nat Shape.vector; elt:'elt> t
       -> nat Nat.lt -> 'elt -> unit = fun t i x ->
-      let open Shape.Stride in
+      let open Stride in
       let s = t.stride in
       t.array % (s.offset + s.size * Nat.to_int i) =: x
 
@@ -88,7 +88,7 @@ let is_sparse m = Shape.is_sparse m.shape || Shape.Stride.is_neutral m.stride
 
   let set_3: type a b c. <shape: (a,b,c) Shape.t3; elt:'elt> t
     -> a Nat.lt -> b Nat.lt -> c Nat.lt -> 'elt -> unit = fun t i j k x ->
-    let open Shape.Stride in
+    let open Stride in
     let s = t.stride in
     let set d1 d2 =
       let pos =
@@ -117,14 +117,14 @@ let unsafe_create shape array =
   if len <> size  then
     raise @@ Dimension_error("Multidim_array.create_unsafe", size, len)
   else
-    {shape; array; stride = Shape.Stride.neutral }
+    {shape; array; stride = Stride.neutral }
 
 let init_sh shape f =
   let shape = Shape.detach shape in
   let size = Shape.physical_size shape in
   let z = Shape.zero shape in
   let array = A.make size @@ f z in
-  let m = {shape; array; stride = Shape.Stride.neutral } in
+  let m = {shape; array; stride = Stride.neutral } in
   Shape.iter_on shape (fun sh -> m.(sh) <- f sh);
   m
 

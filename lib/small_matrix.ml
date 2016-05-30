@@ -1,6 +1,6 @@
 module A = Array
 open Signatures
-let delta = Tensority_misc.delta
+let delta = Misc.delta
 
 let (@?) a n = A.unsafe_get a n
 let ( % ) a n x = A.unsafe_set a n x
@@ -72,7 +72,7 @@ let diag v =
   let dim = Small_vec.typed_dim v in
   let n = Nat.to_int dim in
   let a = Array.make (n * n) 0. in
-  Nat.iter_on dim ( fun k -> a % (Nat.to_int k * n) =: (Small_vec.get v k) );
+  Nat.iter_on dim ( fun k -> a % (Nat.to_int k * n) =: Small_vec.( v.(k) ) ) ;
   create dim dim a
 
 let id dim = square dim init delta

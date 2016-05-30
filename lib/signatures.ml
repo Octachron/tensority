@@ -41,4 +41,26 @@ sig
     float -> unit [@@indexop.arraylike]
 end
 
+module type tensor_operators =
+sig
+  type 'a t constraint 'a = <contr:'b; cov:'c>
+  type ('a,'b) matrix
+  val ( * ) :
+    < contr : 'a; cov : 'b > t ->
+    < contr : 'b; cov : 'c > t -> < contr : 'a; cov : 'c > t
+  val ( |*| ) :
+    < contr : 'a; cov : 'b > t -> < contr : 'a; cov : 'b > t -> float
+  val ( + ) :
+    < contr : 'a; cov : 'b > t ->
+    < contr : 'a; cov : 'b > t -> < contr : 'a; cov : 'b > t
+  val ( - ) :
+    < contr : 'a; cov : 'b > t ->
+    < contr : 'a; cov : 'b > t -> < contr : 'a; cov : 'b > t
+  val ( *. ) :
+    float -> < contr : 'a; cov : 'b > t -> < contr : 'a; cov : 'b > t
+  val ( /. ) :
+    float -> < contr : 'a; cov : 'b > t -> < contr : 'a; cov : 'b > t
+  val ( ** ) : ('a, 'a) matrix -> int -> ('a, 'a) matrix
+end
+
 exception Dimension_error of string * int * int

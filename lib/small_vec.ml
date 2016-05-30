@@ -1,6 +1,6 @@
 
 open Signatures
-open Tensority_misc
+open Misc
 module A = Array
 
 type +'a t = float array
