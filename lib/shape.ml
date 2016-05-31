@@ -13,9 +13,7 @@ type empty = <n:z; list:nil>
 type ('k1,'k2) empty_2 =
   < k_in:'k1; t_in:empty; t_out:empty; k_out:'k2>
 
-
-type _ elt =
-  | Elt: ('nat,'kind) Nat.t ->
+type ( 'kind, 'nat, 'n, 'l, 'k, 'n2, 'l2 ) abs_elt_0 =
     <
       x:
         <
@@ -31,24 +29,13 @@ type _ elt =
          t_out:<n:'n2;list: 'l2>;
          k_out:'k;
        >;
-    > elt
+    >
+
+type _ elt =
+  | Elt: ('nat,'kind) Nat.t ->
+    ('kind, 'nat, 'n, 'l, 'k, 'n2, 'l2 ) abs_elt_0 elt
   | P_elt: int * 'nat Nat.eq ->
-    <
-      x:
-        <
-          k_in:Nat.eqm;
-          t_in: <n:'n;list:'l>;
-          t_out:<n:'n2;list:'l2>;
-          k_out:'k;
-        >;
-     fx:
-       <
-         k_in:Nat.eqm;
-         t_in: <n:'n succ;list:'nat * 'l>;
-         t_out:<n:'n2;list: 'l2>;
-         k_out:'k;
-       >;
-    > elt
+    (Nat.eqm, 'nat, 'n, 'l, 'k, 'n2, 'l2 ) abs_elt_0 elt
   (** A [P_elt(phy,m)] represents a block of size [phy] restricted
       to a size [m] by a slice *)
   | All :
@@ -69,12 +56,12 @@ type _ elt =
           >
       >  elt
   | Range: ('in_,'out) Range.t ->
-        <x:
-           <
-             k_in:'k;
-             t_in: <n:'n;list:'l>;
-             t_out:<n:'n2;list:'l2>;
-             k_out:'k2;
+    <x:
+       <
+         k_in:'k;
+         t_in: <n:'n;list:'l>;
+         t_out:<n:'n2;list:'l2>;
+         k_out:'k2;
        >;
      fx:
        <
@@ -83,8 +70,14 @@ type _ elt =
          t_out:<n:'n2 succ;list: 'out * 'l2>;
          k_out:'k2;
        >
-        >
-          elt
+    > elt
+
+type ('main, 'sec) abs_elt =
+  ('kind,'nat,'n,'l,'k,'n2,'l2) abs_elt_0 elt
+  constraint
+    'main = 'kind * 'nat * 'n * 'l
+  constraint
+    'sec = 'k * 'n2 * 'l2
 
 let pp_elt: type a. Format.formatter -> a elt -> unit  = fun ppf -> function
   | Elt nat -> Format.fprintf ppf "%d" @@ Nat.to_int nat
@@ -263,7 +256,7 @@ let rec fold_left: type sh. ('a -> sh lt -> 'a ) -> 'a -> sh eq -> 'a =
 
 
 let iter_jmp ~up ~down ~f shape =
-  let rec iter : type sh. up:(int -> unit) -> down:(int->unit) ->f:(sh lt -> unit)
+  let rec iter: type sh. up:(int -> unit) -> down:(int->unit) ->f:(sh lt -> unit)
     -> level:int -> sh eq -> unit =
     fun ~up ~down ~f ~level ->
       function
@@ -433,6 +426,12 @@ let rec position_gen:
       ~mult:(Nat.to_int dim * mult) filter shape indices
   | [], [], _ -> mult, sum
   | _, _ , _ -> assert false (* unreachable *)
+
+let split: type k n a b. (<n:n succ; list:a * b>, k) gen_l
+  -> ( k * a * b * n, _ ) abs_elt * (<n:n; list:b>, k) gen_l =
+  function
+  | (Elt nat) as e :: q -> Elt nat, q
+  | (P_elt (k,nat)) as e :: q -> P_elt (k,nat) , q
 
 end
 

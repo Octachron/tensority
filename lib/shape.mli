@@ -11,27 +11,29 @@ type empty = < list : nil; n : z >
 type ('k1, 'k2) empty_2 =
     < k_in : 'k1; k_out : 'k2; t_in : empty; t_out : empty >
 
-type _ elt =
-    Elt :
-      ('nat, 'kind) Nat.t ->
-    < fx :
-        < k_in : 'kind; k_out : 'k;
-          t_in : < list : 'nat * 'l;
-                   n : 'n succ >;
-          t_out : < list : 'l2; n : 'n2 > >;
-      x : < k_in : 'kind; k_out : 'k;
-            t_in : < list : 'l; n : 'n >;
-            t_out : < list : 'l2; n : 'n2 > >
+type ( 'kind, 'nat, 'n, 'l, 'k, 'n2, 'l2 ) abs_elt_0 =
+    <
+      x:
+        <
+          k_in:'kind;
+          t_in: <n:'n;list:'l>;
+          t_out:<n:'n2;list:'l2>;
+          k_out:'k;
+        >;
+     fx:
+       <
+         k_in:'kind;
+         t_in: <n:'n succ;list:'nat * 'l>;
+         t_out:<n:'n2;list: 'l2>;
+         k_out:'k;
+       >;
     >
-      elt
-  | P_elt : int *
-      'nat Nat.eq -> < fx : < k_in : Nat.eqm; k_out : 'k;
-                              t_in : < list : 'nat * 'l; n : 'n succ >;
-                              t_out : < list : 'l2; n : 'n2 > >;
-                       x : < k_in : Nat.eqm; k_out : 'k;
-                             t_in : < list : 'l; n : 'n >;
-                             t_out : < list : 'l2; n : 'n2 > > >
-                     elt
+
+type _ elt =
+  | Elt: ('nat,'kind) Nat.t ->
+    ('kind, 'nat, 'n, 'l, 'k, 'n2, 'l2 ) abs_elt_0 elt
+  | P_elt: int * 'nat Nat.eq ->
+    (Nat.eqm, 'nat, 'n, 'l, 'k, 'n2, 'l2 ) abs_elt_0 elt
   | All :
       < fx : < k_in : 'kin; k_out : 'k;
                t_in : < list : 'any * 'l; n : 'n succ >;
@@ -50,6 +52,13 @@ type _ elt =
             t_out : < list : 'l2; n : 'n2 > >
     > elt
 
+type ('main, 'sec) abs_elt =
+  ('kind,'nat,'n,'l,'k,'n2,'l2) abs_elt_0 elt
+  constraint
+    'main = 'kind * 'nat * 'n * 'l
+  constraint
+    'sec = 'k * 'n2 * 'l2
+
 val pp_elt : Format.formatter -> 'a elt -> unit
 
 type _ t =
@@ -60,8 +69,8 @@ type ('a, 'k) gen_l =
     < k_in : 'k; k_out : Nat.eqm; t_in : 'a; t_out : empty > t
 type 'a eq = ('a, Nat.eqm) gen_l
 type 'a lt = ('a, Nat.ltm) gen_l
-
 type 'a l = 'a eq
+
 type ('a, 'b) eq_s =
     < k_in : Nat.eqm; k_out : Nat.eqm; t_in : 'a; t_out : 'b > t
 type ('a, 'b) lt_s =
@@ -83,14 +92,8 @@ val logical_size : 'sh eq -> int
 val is_sparse : 'sh eq -> bool
 val detach : 'sh eq -> 'sh eq
 val elt :
-  int ->
-  ('a, Nat.eqm) Nat.t ->
-  < fx : < k_in : Nat.eqm; k_out : 'b;
-           t_in : < list : 'a * 'c; n : 'd succ >;
-           t_out : < list : 'e; n : 'f > >;
-    x : < k_in : Nat.eqm; k_out : 'b; t_in : < list : 'c; n : 'd >;
-          t_out : < list : 'e; n : 'f > > >
-  elt
+  int -> ('a, Nat.eqm) Nat.t
+  -> (Nat.eqm * 'a * _ * _, _ ) abs_elt
 
 val filter :
   ?final_stride:Stride.t ->
@@ -136,6 +139,9 @@ module Slice :
       (< list : 'a; n : 'b >, < list : 'e; n : 'f >) s
     val position_gen :
       mult:int -> sum:int -> ('sh, 'filt) s -> 'sh l -> 'filt lt -> int * int
+    val split:
+      (<n:'n succ; list:'a * 'b>, 'k) gen_l
+      -> ( 'k * 'a * 'b * 'n, _ ) abs_elt * (<n:'n; list:'b>, 'k) gen_l
   end
 
 val pp : Format.formatter -> 'a t -> unit
