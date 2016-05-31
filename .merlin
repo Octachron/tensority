@@ -1,7 +1,7 @@
 S ppx/**
-S src/**
+S lib/**
 B _build/**
 S examples/*
-PKG ppx_indexop oceti compiler-libs
+PKG ppx_indexop
 FLG -w A-44-42-45-40-4-41
 FLG -open Tensority
