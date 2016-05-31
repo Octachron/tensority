@@ -55,9 +55,8 @@ type (+'a,+'res) filter_zero =
 
 module Indices :
 sig
-  module K : sig type 'a k = [ `Lt ] type nonrec 'a t = ('a, [ `Lt ]) t end
 
-  type ('a, +'b) b = int * ('a * 'b at_least_1 * nz) K.t
+  type ('a, +'b) b = int * ('a * 'b at_least_1 * nz) lt
 
   val _9n : ( _ at_least_1,'a) b
   val _8n : ([< _ end_ Gtp._9 | _ all Lep._8 ],_) b
@@ -70,17 +69,16 @@ sig
   val _1n : ([< _ end_ Gtp._2 | _ all Lep._1],_) b
   val _0n : ([< _ end_ Gtp._1],_) b
 
-  type nonrec ('a, 'b) t = ('a, 'b K.k) t
   type ('d, +'a) s = ('d, 'a) all constraint 'a = [< 'd Gtp._0 ]
 
   type ('a, 'fx, 'b, 'lead) f_gen =
-    int * ('x * 'd * 'l, 'k) t -> int * ('fx * ('d, 'c) s * 'lead, 'k) t
+    int * ('x * 'd * 'l) lt -> int * ('fx * ('d, 'c) s * 'lead) lt
     constraint 'a = 'x * 'd
-    constraint 'b = 'l * 'k * ([< 'd Gtp._0 ] as 'c)
+    constraint 'b = 'l * ([< 'd Gtp._0 ] as 'c)
   type ('a, 'fx, 'b) f = ('a, 'fx, 'b, nz) f_gen constraint 'a = 'g * 'f
-    constraint 'b = 'c * 'd * ([< 'f Gtp._0 ] as 'e)
+    constraint 'b = 'c * ([< 'f Gtp._0 ] as 'e)
   type ('a, 'fx, 'b) f0 = ('a, 'fx, 'b, z) f_gen constraint 'a = 'g * 'f
-    constraint 'b = 'c * 'd * ([< 'f Gtp._0 ] as 'e)
+    constraint 'b = 'c * ([< 'f Gtp._0 ] as 'e)
 
 
   val _9 : ('a * 'd, [< `_9 of 'a | ('d,_) s Lep._8 ], _ ) f
@@ -94,18 +92,17 @@ sig
   val _1 : ('a * 'd, [< `_1 of 'a | 'd Gtp._2 | ('d,_) s Lep._0 ], _ ) f
   val _0 : ('a * 'd, [< `_0 of 'a | 'd Gtp._1 ], _ ) f0
 
-  val close: int * ((_,'x) filter_zero * 'd * nz, 'k) t ->  ('x,'k) t
-  val close_z : int * ('x * 'd * nz, 'k) t ->  ('x,'k) t
+  val close: int * ((_,'x) filter_zero * 'd * nz) lt ->  'x lt
+  val close_z : int * ('x * 'd * nz) lt ->  'x lt
 
   val ( @ ) : ('a -> 'b) -> 'a -> 'b
   end
 
 module Adder :
 sig
-  module K : sig type 'a k = 'a end
 
-  type (+'a,+'any) b = int * ('a * 'any1 at_least_1 * nz, 'any2 lem) t
-    constraint 'any = 'any1 * 'any2
+  type (+'a,+'any) b = int * ('a * 'any at_least_1 * nz) le
+
 
   val _9n : ([< _ end_ Gtp._9 | _ all Lep._8 ],_) b
   val _8n : ([< _ end_ Gtp._8 | _ all Lep._7],_) b
@@ -118,17 +115,16 @@ sig
   val _1n : ([< _ end_ Gtp._1],_) b
   val _0n : ('any,_) b
 
-  type nonrec ('a, 'b) t = ('a, 'b K.k) t
   type ('d, +'a) s = ('d, 'a) all constraint 'a = [< 'd Gtp._0 ]
 
   type ('a, 'fx, 'b, 'lead) f_gen =
-    int * ('x * 'd * 'l, 'k) t -> int * ('fx * ('d, 'c) s * 'lead, 'k) t
+    int * ('x * 'd * 'l) le -> int * ('fx * ('d, 'c) s * 'lead) le
     constraint 'a = 'x * 'd
-    constraint 'b = 'l * 'k * ([< 'd Gtp._0 ] as 'c)
+    constraint 'b = 'l * ([< 'd Gtp._0 ] as 'c)
   type ('a, 'fx, 'b) f = ('a, 'fx, 'b, nz) f_gen constraint 'a = 'g * 'f
-    constraint 'b = 'c * 'd * ([< 'f Gtp._0 ] as 'e)
+    constraint 'b = 'c * ([< 'f Gtp._0 ] as 'e)
   type ('a, 'fx, 'b) f0 = ('a, 'fx, 'b, z) f_gen constraint 'a = 'g * 'f
-    constraint 'b = 'c * 'd * ([< 'f Gtp._0 ] as 'e)
+    constraint 'b = 'c * ([< 'f Gtp._0 ] as 'e)
 
 
   val _9 : ('a * 'd, [< `_9 of 'a | ('d,_) s Lep._8 ], _ ) f
@@ -142,8 +138,8 @@ sig
   val _1 : ('a * 'd, [< `_1 of 'a | 'd Gtp._2 | ('d,_) s Lep._0 ], _ ) f
   val _0 : ('a * 'd, [< `_0 of 'a | 'd Gtp._1 ], _ ) f0
 
-  val close: int * ((_,'x) filter_zero * 'd * nz, 'k) t ->  ('x,'k) t
-  val close_z : int * ('x * 'd * nz, 'k) t ->  ('x,'k) t
+  val close: int * ((_,'x) filter_zero * 'd * nz) le ->  'x le
+  val close_z : int * ('x * 'd * nz) le ->  'x le
 
   val ( @ ) : ('a -> 'b) -> 'a -> 'b
   end
@@ -204,9 +200,8 @@ val x :
         | `_7 of 'a
         | `_8 of 'a
         | `_9 of 'a ])
-      end_ Gtp._1 ],
-   'b)
-  Indices.t
+      end_ Gtp._1 ])
+  lt
 
 val y :
   ([< `_1 of 'a & ('b, [< 'b Gtp._0 ]) all
@@ -232,9 +227,8 @@ val y :
     | `_6 of 'i & ('d, 'e) end_
     | `_7 of 'j & ('d, 'e) end_
     | `_8 of 'k & ('d, 'e) end_
-    | `_9 of 'l & ('d, 'e) end_ ],
-   'm)
-  Indices.t
+    | `_9 of 'l & ('d, 'e) end_ ])
+  lt
 
 val z :
   ([< `_1 of 'a & ('b, [< 'b Gtp._0 ] as 'c) all
@@ -260,9 +254,8 @@ val z :
     | `_6 of 'j & ('f, 'g) end_
     | `_7 of 'k & ('f, 'g) end_
     | `_8 of 'l & ('f, 'g) end_
-    | `_9 of 'm & ('f, 'g) end_ ],
-   'n)
-  Indices.t
+    | `_9 of 'm & ('f, 'g) end_ ])
+    lt
 
 val t :
   ([< `_1 of 'a & ('b, [< 'b Gtp._0 ] as 'c) all
@@ -288,9 +281,8 @@ val t :
     | `_6 of 'j & ('g, 'h) end_
     | `_7 of 'k & ('g, 'h) end_
     | `_8 of 'l & ('g, 'h) end_
-    | `_9 of 'm & ('g, 'h) end_ ],
-   'n)
-  Indices.t
+    | `_9 of 'm & ('g, 'h) end_ ])
+  lt
 
 val _0i :
   ([< ('a,
@@ -305,9 +297,8 @@ val _0i :
         | `_7 of 'a
         | `_8 of 'a
         | `_9 of 'a ])
-      end_ Gtp._1 ],
-   'b)
-  Indices.t
+      end_ Gtp._1 ])
+  lt
 
 val _1i :
   ([< `_1 of 'a & ('b, [< 'b Gtp._0 ]) all
@@ -333,9 +324,8 @@ val _1i :
     | `_6 of 'i & ('d, 'e) end_
     | `_7 of 'j & ('d, 'e) end_
     | `_8 of 'k & ('d, 'e) end_
-    | `_9 of 'l & ('d, 'e) end_ ],
-   'm)
-  Indices.t
+    | `_9 of 'l & ('d, 'e) end_ ])
+  lt
 
 val _2i :
   ([< `_1 of 'a & ('b, [< 'b Gtp._0 ] as 'c) all
@@ -361,9 +351,8 @@ val _2i :
     | `_6 of 'j & ('f, 'g) end_
     | `_7 of 'k & ('f, 'g) end_
     | `_8 of 'l & ('f, 'g) end_
-    | `_9 of 'm & ('f, 'g) end_ ],
-   'n)
-  Indices.t
+    | `_9 of 'm & ('f, 'g) end_ ])
+  lt
 
 val _3i :
   ([< `_1 of 'a & ('b, [< 'b Gtp._0 ] as 'c) all
@@ -389,9 +378,8 @@ val _3i :
     | `_6 of 'j & ('g, 'h) end_
     | `_7 of 'k & ('g, 'h) end_
     | `_8 of 'l & ('g, 'h) end_
-    | `_9 of 'm & ('g, 'h) end_ ],
-   'n)
-  Indices.t
+    | `_9 of 'm & ('g, 'h) end_ ])
+  lt
 
 val _4i :
   ([< `_1 of 'a & ('b, [< 'b Gtp._0 ] as 'c) all
@@ -417,9 +405,8 @@ val _4i :
     | `_6 of 'j & ('h, 'i) end_
     | `_7 of 'k & ('h, 'i) end_
     | `_8 of 'l & ('h, 'i) end_
-    | `_9 of 'm & ('h, 'i) end_ ],
-   'n)
-  Indices.t
+    | `_9 of 'm & ('h, 'i) end_ ])
+  lt
 
 val _5i :
   ([< `_1 of 'a & ('b, [< 'b Gtp._0 ] as 'c) all
@@ -445,9 +432,8 @@ val _5i :
         end_
     | `_7 of 'k & ('i, 'j) end_
     | `_8 of 'l & ('i, 'j) end_
-    | `_9 of 'm & ('i, 'j) end_ ],
-   'n)
-  Indices.t
+    | `_9 of 'm & ('i, 'j) end_ ])
+  lt
 
 val _6i :
   ([< `_1 of 'a & ('b, [< 'b Gtp._0 ] as 'c) all
@@ -473,9 +459,8 @@ val _6i :
          as 'k)
         end_
     | `_8 of 'l & ('j, 'k) end_
-    | `_9 of 'm & ('j, 'k) end_ ],
-   'n)
-  Indices.t
+    | `_9 of 'm & ('j, 'k) end_ ])
+  lt
 
 val _7i :
   ([< `_1 of 'a & ('b, [< 'b Gtp._0 ] as 'c) all
@@ -501,9 +486,8 @@ val _7i :
           | `_9 of 'k ]
          as 'l)
         end_
-    | `_9 of 'm & ('k, 'l) end_ ],
-   'n)
-  Indices.t
+    | `_9 of 'm & ('k, 'l) end_ ])
+  lt
 val _8i :
   ([< `_1 of 'a & ('b, [< 'b Gtp._0 ] as 'c) all
     | `_2 of 'd & ('b, 'c) all
@@ -527,9 +511,8 @@ val _8i :
           | `_7 of 'l
           | `_8 of 'l
           | `_9 of 'l ])
-        end_ ],
-   'm)
-  Indices.t
+        end_ ])
+  lt
 val _9i :
   (('a *
     ([< `T
@@ -553,8 +536,8 @@ val _9i :
      | `_7 of ('a, 'b) end_ & 'i
      | `_8 of ('a, 'b) end_ & 'j
      | `_9 of ('a, 'b) end_ & 'k ])
-   at_least_1, 'l)
-  Indices.t
+   at_least_1)
+  lt
 val _10i :
   ([< `_1 of
         'a &
@@ -594,10 +577,10 @@ val _10i :
     | `_6 of 'j & ('d * 'e * 'f) at_least_1
     | `_7 of 'k & ('d * 'e * 'f) at_least_1
     | `_8 of 'l & ('d * 'e * 'f) at_least_1
-    | `_9 of 'm & ('d * 'e * 'f) at_least_1 ],
-   'n)
-  Indices.t
-val _0p : ('a, [< `Eq | `Lt ] lem) Adder.t
+    | `_9 of 'm & ('d * 'e * 'f) at_least_1 ])
+    lt
+
+val _0p : 'a le
 val _1p :
   ([< `_1 of
         'a &
@@ -622,9 +605,8 @@ val _1p :
     | `_6 of 'h & ('b, 'c) end_
     | `_7 of 'i & ('b, 'c) end_
     | `_8 of 'j & ('b, 'c) end_
-    | `_9 of 'k & ('b, 'c) end_ ],
-   [< `Eq | `Lt ] lem)
-  Adder.t
+   | `_9 of 'k & ('b, 'c) end_ ]
+  ) le
 val _2p :
   ([< `_1 of 'a & ('b, [< 'b Gtp._0 ]) all
     | `_2 of
@@ -649,9 +631,7 @@ val _2p :
     | `_6 of 'i & ('d, 'e) end_
     | `_7 of 'j & ('d, 'e) end_
     | `_8 of 'k & ('d, 'e) end_
-    | `_9 of 'l & ('d, 'e) end_ ],
-   [< `Eq | `Lt ] lem)
-  Adder.t
+    | `_9 of 'l & ('d, 'e) end_ ]) le
 val _3p :
   ([< `_1 of 'a & ('b, [< 'b Gtp._0 ] as 'c) all
     | `_2 of 'd & ('b, 'c) all
@@ -676,9 +656,7 @@ val _3p :
     | `_6 of 'j & ('f, 'g) end_
     | `_7 of 'k & ('f, 'g) end_
     | `_8 of 'l & ('f, 'g) end_
-    | `_9 of 'm & ('f, 'g) end_ ],
-   [< `Eq | `Lt ] lem)
-  Adder.t
+    | `_9 of 'm & ('f, 'g) end_ ]) le
 val _4p :
   ([< `_1 of 'a & ('b, [< 'b Gtp._0 ] as 'c) all
     | `_2 of 'd & ('b, 'c) all
@@ -703,9 +681,7 @@ val _4p :
     | `_6 of 'j & ('g, 'h) end_
     | `_7 of 'k & ('g, 'h) end_
     | `_8 of 'l & ('g, 'h) end_
-    | `_9 of 'm & ('g, 'h) end_ ],
-   [< `Eq | `Lt ] lem)
-  Adder.t
+    | `_9 of 'm & ('g, 'h) end_ ]) le
 val _5p :
   ([< `_1 of 'a & ('b, [< 'b Gtp._0 ] as 'c) all
     | `_2 of 'd & ('b, 'c) all
@@ -730,9 +706,7 @@ val _5p :
     | `_6 of 'j & ('h, 'i) end_
     | `_7 of 'k & ('h, 'i) end_
     | `_8 of 'l & ('h, 'i) end_
-    | `_9 of 'm & ('h, 'i) end_ ],
-   [< `Eq | `Lt ] lem)
-  Adder.t
+    | `_9 of 'm & ('h, 'i) end_ ]) le
 val _6p :
   ([< `_1 of 'a & ('b, [< 'b Gtp._0 ] as 'c) all
     | `_2 of 'd & ('b, 'c) all
@@ -757,9 +731,7 @@ val _6p :
         end_
     | `_7 of 'k & ('i, 'j) end_
     | `_8 of 'l & ('i, 'j) end_
-    | `_9 of 'm & ('i, 'j) end_ ],
-   [< `Eq | `Lt ] lem)
-  Adder.t
+    | `_9 of 'm & ('i, 'j) end_ ]) le
 val _7p :
   ([< `_1 of 'a & ('b, [< 'b Gtp._0 ] as 'c) all
     | `_2 of 'd & ('b, 'c) all
@@ -784,9 +756,7 @@ val _7p :
          as 'k)
         end_
     | `_8 of 'l & ('j, 'k) end_
-    | `_9 of 'm & ('j, 'k) end_ ],
-   [< `Eq | `Lt ] lem)
-  Adder.t
+    | `_9 of 'm & ('j, 'k) end_ ]) le
 val _8p :
   ([< `_1 of 'a & ('b, [< 'b Gtp._0 ] as 'c) all
     | `_2 of 'd & ('b, 'c) all
@@ -811,9 +781,7 @@ val _8p :
           | `_9 of 'k ]
          as 'l)
         end_
-    | `_9 of 'm & ('k, 'l) end_ ],
-   [< `Eq | `Lt ] lem)
-  Adder.t
+    | `_9 of 'm & ('k, 'l) end_ ]) le
 val _9p :
   ([< `_1 of 'a & ('b, [< 'b Gtp._0 ] as 'c) all
     | `_2 of 'd & ('b, 'c) all
@@ -837,9 +805,7 @@ val _9p :
           | `_7 of 'l
           | `_8 of 'l
           | `_9 of 'l ])
-        end_ ],
-   [< `Eq | `Lt ] lem)
-  Adder.t
+        end_ ]) le
 val _10p :
   ([< `_1 of 'a & 'b
     | `_2 of
@@ -865,6 +831,5 @@ val _10p :
     | `_6 of 'j & ('d * 'e * 'f) at_least_1
     | `_7 of 'k & ('d * 'e * 'f) at_least_1
     | `_8 of 'l & ('d * 'e * 'f) at_least_1
-    | `_9 of 'm & ('d * 'e * 'f) at_least_1 ],
-   [< `Eq | `Lt ] lem Adder.K.k)
-  Adder.t
+    | `_9 of 'm & ('d * 'e * 'f) at_least_1 ]
+  ) le

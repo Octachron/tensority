@@ -1,4 +1,4 @@
-type +'a lem = [< `Lt | `Eq ] as 'a
+type lem = [ `Lt | `Eq ]
 type eqm = [ `Eq ]
 type ltm = [ `Lt ]
 
@@ -23,7 +23,7 @@ include Core
 
 type +'a lt = ('a,ltm) t
 type +'a eq = ('a,eqm) t
-type (+'a,+'b) le = ('a,'b lem) t
+type +'a le = ('a,lem) t
 
 type z = private Z
 type nz = private NZ
@@ -54,8 +54,6 @@ let fold f acc n =
 
 let (|>?) x f = match x with Some x -> Some(f x) | None -> None
 let (||?) opt x = match opt with Some x -> x | None -> x
-
-
 
 let partial_iter  ~start ~(stop: 'a eq) (f:'a lt -> unit): unit =
   for i=start to (to_int stop - 1) do
@@ -104,7 +102,7 @@ let ordinal_map (f:'a lt -> 'b ) (dim:'a eq) =
 
 exception Type_level_integer_error
 let certified_adder: 'inf eq -> 'diff eq -> 'sup eq ->
-  ( ('inf,_) le -> ('diff,_) le -> ('sup,_) le )
+  ( 'inf lt -> 'diff le -> 'sup lt )
   =
   fun inf diff sup->
     if to_int inf + to_int diff <> to_int sup then

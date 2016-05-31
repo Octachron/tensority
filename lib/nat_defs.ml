@@ -51,18 +51,18 @@ type (+'a,+'res) filter_zero =
     'a = 'b * 'c *'d *'e *'f *'g *'h * 'i * 'j
 
 
-module Shifter(K:sig type +'a k end) = struct
-  type (+'a,+'b) t = ('a,'b K.k) Nat.t
+module Shifter(K:sig type m end) = struct
+  type +'a t = ('a, K.m) Nat.t
   type (+'d,+'x) s = ('d,'x) all
 
   let shift k (d,x) = d * 10, create (k*d + Nat.to_int x)
 
   type ('args,'fx,'aux,'lead) f_gen =
-    int * ('x * 'd * 'l ,'k) t  -> int * ('fx * ('d, 'any) s * 'lead, 'k ) t
+    int * ('x * 'd * 'l ) t  -> int * ('fx * ('d, 'any) s * 'lead ) t
     constraint
       'args = 'x * 'd
     constraint
-        'aux = 'l * 'k * 'any
+        'aux = 'l * 'any
 
   type ('x,'fx,'aux) f  = ('x,'fx,'aux,nz) f_gen
   type ('x,'fx,'aux) f0  = ('x,'fx,'aux,z) f_gen
@@ -87,19 +87,18 @@ module Shifter(K:sig type +'a k end) = struct
     fun x -> shift 1 x
   let _0 : ('a * 'd, [< `_0 of 'a | 'd Gtp._1 ], _ ) f0 = fun x -> shift 0 x
 
-  let close: int * ((_,'x) filter_zero * 'd * nz, 'k) t ->  ('x,'k) t =
+  let close: int * ((_,'x) filter_zero * 'd * nz) t ->  'x t =
     fun (_m,n) -> magic n
-  let close_z : int * ('x * 'd * nz, 'k) t ->  ('x,'k) t =
+  let close_z : int * ('x * 'd * nz) t ->  'x t =
     fun (_,n) -> magic n
 
   let (@) f x = f x
 end
 
 module Indices = struct
-  module K = struct type +'a k = [ `Lt] type +'a t =('a,[`Lt]) Nat.t end
-  open K
+  module K = struct type m = ltm end
   let make n = 10, create n
-  type (+'a,+'any) b = int * ('a * 'any at_least_1 * nz) t
+  type (+'a,+'any) b = int * ('a * 'any at_least_1 * nz) lt
 
   let _9n : ( _ at_least_1,'a) b = make 9
   let _8n : ([< _ end_ Gtp._9 | _ all Lep._8 ],_) b = make 8
@@ -117,11 +116,10 @@ end
 
 module Adder = struct
 
-  module K = struct type 'a k='a end
+  module K = struct type m = lem end
 
   let make n = 10, create n
-  type (+'a,+'any) b = int * ('a * 'any1 at_least_1 * nz, 'any2 lem) t
-    constraint 'any = 'any1 * 'any2
+  type (+'a,+'any) b = int * ('a * 'any at_least_1 * nz) le
 
   let _9n : ([< _ end_ Gtp._9 | _ all Lep._8 ],_) b = make 9
   let _8n : ([< _ end_ Gtp._8 | _ all Lep._7],_) b = make 8

@@ -1,4 +1,4 @@
-type +'a lem = 'a constraint 'a = [< `Eq | `Lt ]
+type lem = [ `Eq | `Lt ]
 type eqm = [ `Eq ]
 type ltm = [ `Lt ]
 type empty = private Empty_set
@@ -12,7 +12,7 @@ val show : ('a, 'b) t -> string
 
 type 'a lt = ('a, ltm) t
 type 'a eq = ('a, eqm) t
-type ('a, +'b) le = ('a, 'b lem) t constraint 'b = [< `Eq | `Lt ]
+type 'a le = ('a, lem) t constraint 'b = [< `Eq | `Lt ]
 
 type z = private Z
 type nz = private NZ
@@ -48,8 +48,7 @@ val certified_adder :
   'inf eq ->
   'diff eq ->
   'sup eq ->
-  ('inf, [< `Eq | `Lt ]) le ->
-  ('diff, [< `Eq | `Lt ]) le -> ('sup, [< `Eq | `Lt ]) le
+  ('inf lt -> 'diff le -> 'sup lt)
 
 module Dynamic :
   functor (D : sig val dim : int end) ->
