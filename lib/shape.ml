@@ -124,20 +124,6 @@ let rec logical_size: type sh. sh eq -> int = function
   | P_elt(_k,nat)::sh -> Nat.to_int nat * logical_size sh
 
 
-(*
-let rec free_size: type sh sh2. sh eq -> (sh,sh2) s -> int = fun sh sl ->
-  match sh,sl with
-  | [], [] -> 1
-  | Elt k :: q, Elt m :: sq -> free_size q sq
-  | Elt _ :: q, Range r :: sq -> (Nat.to_int @@ Range.len r) * free_size q sq
-  | Elt k :: q, All :: sq -> Nat.to_int k * free_size q sq
-  (* S_elt behaves the same ways as elt regarding free_size *)
-  | P_elt (_,k) :: q, Elt m :: sq -> free_size q sq
-  | P_elt (_,_) :: q, Range r :: sq -> (Nat.to_int @@ Range.len r) * free_size q sq
-  | P_elt (_,k) :: q, All :: sq -> Nat.to_int k * free_size q sq
-  | [], _ -> assert false (* unreachable *)
-*)
-
 let rec is_sparse: type sh. sh eq -> bool = function
   | P_elt _ :: _ -> true
   | Elt _ :: q -> is_sparse q
