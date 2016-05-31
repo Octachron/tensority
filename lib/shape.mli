@@ -13,14 +13,17 @@ type ('k1, 'k2) empty_2 =
 
 type _ elt =
     Elt :
-      ('nat, 'kind) Nat.t -> < fx : < k_in : 'kind; k_out : 'k;
-                                      t_in : < list : 'nat * 'l;
-                                               n : 'n succ >;
-                                      t_out : < list : 'l2; n : 'n2 > >;
-                               x : < k_in : 'kind; k_out : 'k;
-                                     t_in : < list : 'l; n : 'n >;
-                                     t_out : < list : 'l2; n : 'n2 > > >
-                             elt
+      ('nat, 'kind) Nat.t ->
+    < fx :
+        < k_in : 'kind; k_out : 'k;
+          t_in : < list : 'nat * 'l;
+                   n : 'n succ >;
+          t_out : < list : 'l2; n : 'n2 > >;
+      x : < k_in : 'kind; k_out : 'k;
+            t_in : < list : 'l; n : 'n >;
+            t_out : < list : 'l2; n : 'n2 > >
+    >
+      elt
   | P_elt : int *
       'nat Nat.eq -> < fx : < k_in : Nat.eqm; k_out : 'k;
                               t_in : < list : 'nat * 'l; n : 'n succ >;
@@ -34,22 +37,23 @@ type _ elt =
                t_in : < list : 'any * 'l; n : 'n succ >;
                t_out : < list : 'any * 'l2; n : 'n2 succ > >;
         x : < k_in : 'kin; k_out : 'k; t_in : < list : 'l; n : 'n >;
-              t_out : < list : 'l2; n : 'n2 > > >
-      elt
+              t_out : < list : 'l2; n : 'n2 > >
+      > elt
   | Range :
-      ('in_, 'out) Range.t -> < fx : < k_in : 'k; k_out : 'k2;
-                                       t_in : < list : 'in_ * 'l;
-                                                n : 'n succ >;
-                                       t_out : < list : 'out * 'l2;
-                                                 n : 'n2 succ > >;
-                                x : < k_in : 'k; k_out : 'k2;
-                                      t_in : < list : 'l; n : 'n >;
-                                      t_out : < list : 'l2; n : 'n2 > > >
-                              elt
+      ('in_, 'out) Range.t ->
+    < fx :
+        < k_in : 'k; k_out : 'k2;
+          t_in : < list : 'in_ * 'l; n : 'n succ >;
+          t_out : < list : 'out * 'l2; n : 'n2 succ > >;
+      x : < k_in : 'k; k_out : 'k2;
+            t_in : < list : 'l; n : 'n >;
+            t_out : < list : 'l2; n : 'n2 > >
+    > elt
+
 val pp_elt : Format.formatter -> 'a elt -> unit
 
 type _ t =
-    [] : ('a, 'b) empty_2 t
+  | [] : ('a, 'b) empty_2 t
   | (::) : < fx : 'fx; x : 'x > elt * 'x t -> 'fx t
 
 type ('a, 'k) gen_l =
