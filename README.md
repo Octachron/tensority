@@ -7,16 +7,16 @@ multidimensional arrays and tensors manipulation. Tensority try to
 cover three levels of statistical safety:
 
 * tensor order level:
-  ** the type of multidimensional arrays should distinguish between
+  * the type of multidimensional arrays should distinguish between
     arrays of different dimensions
-  ** the type of tensor should moreover distinguish between an vector and 1-form,
+  * the type of tensor should moreover distinguish between an vector and 1-form,
   i.e between `1 + 0` tensor and `0 + 1` tensors
 
 * dimension level:
-  ** adding two vectors of different dimensions should be a type error
+  * adding two vectors of different dimensions should be a type error
 
 * index level
-  ** trying to access the `k+1`th elements of an array of size `k` should be
+  * trying to access the `k+1`th elements of an array of size `k` should be
   an error
 
 
@@ -25,6 +25,7 @@ cover three levels of statistical safety:
 
 
 ```OCaml
+open Tensority
 open Multidim_array
 open Shape
 
