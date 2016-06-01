@@ -11,7 +11,7 @@ let ppx_tag hook =
    match hook with
       | After_rules ->
         flag ["ocaml"; "compile"; "ppx_tensority"] &
-              S [A "-ppx"; A "ppx_tensority_ex.native"]
+              S [A "-ppx"; A "ppx/ppx_tensority.native"]
       | _ -> ()
 
 let fp = Format.fprintf

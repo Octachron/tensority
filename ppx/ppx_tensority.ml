@@ -98,7 +98,8 @@ let le = [%type: _ lem ]
 
 module Expr = struct
   let nat loc kind typ value =
-    [%expr let open Nat in let nat: ([%t typ],[%t kind]) Nat.t =
+    [%expr let open Nat in
+           let nat: ([%t typ],[%t kind]) Nat.t =
                              create [%e value] in nat ][@metaloc loc]
 
   let shape loc kind typ value =
@@ -148,12 +149,12 @@ end
     let ($) f t  = T.constr f t
 
     let gtp loc k t =
-      let lid = Lid.( !"Gtp" <*> to_label k ) in
+      let lid = Lid.( !"Nat_defs" <*> "Gtp" <*> to_label k ) in
       let lid = mkloc ~loc lid in
       (lid $ [t])
 
     let lep loc k t =
-      let lid = Lid.( !"Lep" <*> to_label k ) in
+      let lid = Lid.( !"Nat_defs" <*> "Lep" <*> to_label k ) in
       let lid = mkloc ~loc lid in
       (lid $ [t])
 
@@ -396,7 +397,7 @@ let range loc ?by start stop =
     let start = Ints.Lt.nat loc start and stop = Ints.Lt.nat loc stop
     and len = Ints.Eq.nat loc len and step = Ints.Expr.int loc step in
     [%expr Shape.Range(
-           Shape.Range.create
+           Range.create
              ~start:[%e start] ~stop:[%e stop] ~step:[%e step] ~len:[%e len]
          )
     ][@metaloc loc]
@@ -452,7 +453,8 @@ function
 
 let range_mapper kont mapper = function
   | [%expr [%range [%e? start] [%e? stop] ~by:[%e? step] ] ] as e
-  | ( [%expr [%e? start] #-># [%e? stop] #/# [%e? step] ] as e ) ->
+  | ( [%expr [%e? start] #-># [%e? stop] ~by:[%e? step] ] as e )
+  | ( [%expr [%e? start] #-># [%e? stop] ## [%e? step] ] as e ) ->
     range e.pexp_loc ~by:step start stop
   | [%expr [%range [%e? start] [%e? stop] ] ] as e
   | ([%expr [%e? start] #-># [%e? stop] ] as e) ->

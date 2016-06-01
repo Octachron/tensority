@@ -7,7 +7,7 @@
 <lib/signatures.ml{,i}>: package(ppx_indexop)
 
 <ppx/*>: package(compiler-libs.common), package(ppx_tools.metaquot)
-<examples/*.ml>: ppx_tensority
+<examples/*.ml>: ppx_tensority, with_map(tensority)
 
 true: warn(A-44-45-42-40-4-41-49)
 true: bin_annot

@@ -1,2 +1,2 @@
 REC
-FLG -ppx ../ppx_tensority_ex.native
+FLG -ppx ../ppx_tensority.native

@@ -7,7 +7,7 @@ open Nat_defs
 open Shape
 
 let m = init_sh [253s;253s] ( function [Elt k; Elt l] ->
-    Nat.to_int k + Nat.to_int l | _ :: _ :: _ :: _  -> . | _ -> . )
+    Nat.to_int k + Nat.to_int l)
 
 let t = [%array 4
       [
@@ -34,9 +34,9 @@ let f= [ Elt _0i; All]
 
 (* let r = [%range 0 -- 50 ] *)
 
-let zr = z.[ 0#->#50#/#5 ]
+let zr = z.[ 0 #-># 50 ~by: 5 ]
 let zr' = z.[[%range 0 50]]
 
 let xr = zr.[ 10i ]
 
-let tx = t.[1i,0#->#1, All, 0i ]
+let tx = t.[1i,0 #-># 1, All, 0i ]
