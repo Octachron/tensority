@@ -1,78 +1,36 @@
-
-type +'a succ = 'a Nat.succ
+type 'a succ = 'a Nat.succ
 type z = Nat.z
-
 type nil = private Nil
 
-type empty = <n:z; list:nil>
-type ('k1,'k2) empty_2 =
-  < k_in:'k1; t_in:empty; t_out:empty; k_out:'k2>
+type empty =  z * nil
+type ('k1, 'k2) empty_2 =
+    < kind :'k1 * 'k2; in_ : empty; out : empty >
 
-type ( 'kind, 'nat, 'n, 'l, 'k, 'n2, 'l2 ) abs_elt_0 =
-    <
-      x:
-        <
-          k_in:'kind;
-          t_in: <n:'n;list:'l>;
-          t_out:<n:'n2;list:'l2>;
-          k_out:'k;
-        >;
-     fx:
-       <
-         k_in:'kind;
-         t_in: <n:'n succ;list:'nat * 'l>;
-         t_out:<n:'n2;list: 'l2>;
-         k_out:'k;
-       >;
-    >
+type ( 'kind, 'nat, 'l, 'out ) abs =
+  <
+     k_in:'kind;
+     x: < l_in:'l; out: 'out >;
+     fx: <l_in:'nat * 'l; out: 'out>;
+  >
 
 type _ elt =
   | Elt: ('nat,'kind) Nat.t ->
-    ('kind, 'nat, 'n, 'l, 'k, 'n2, 'l2 ) abs_elt_0 elt
+    ('kind, 'nat, 'l, 'out ) abs elt
   | P_elt: int * 'nat Nat.eq ->
-    (Nat.eqm, 'nat, 'n, 'l, 'k, 'n2, 'l2 ) abs_elt_0 elt
-  (** A [P_elt(phy,m)] represents a block of size [phy] restricted
-      to a size [m] by a slice *)
+    (Nat.eqm, 'nat, 'l, 'out ) abs elt
   | All :
       <
-        x:
-          <
-            k_in:'kin;
-            t_in: <n:'n;list:'l>;
-            t_out:<n:'n2;list:'l2>;
-            k_out: 'k;
-          >;
-        fx:
-          <
-            k_in:'kin;
-            t_in: <n:'n succ;list:'any * 'l>;
-            t_out:<n:'n2 succ;list:'any * 'l2>;
-            k_out:'k;
-          >
-      >  elt
-  | Range: ('in_,'out) Range.t ->
-    <x:
-       <
-         k_in:'k;
-         t_in: <n:'n;list:'l>;
-         t_out:<n:'n2;list:'l2>;
-         k_out:'k2;
-       >;
-     fx:
-       <
-         k_in:'k;
-         t_in: <n:'n succ;list:'in_ * 'l>;
-         t_out:<n:'n2 succ;list: 'out * 'l2>;
-         k_out:'k2;
-       >
+        k_in: 'k;
+        x: < l_in: 'l; out: 'n2 * 'l2 >;
+        fx: < l_in: 'any * 'l; out: 'n2 succ * ('any * 'l2) >
+      > elt
+  | Range :
+      ('in_, 'out) Range.t ->
+    <
+      k_in:'k;
+      x: < l_in: 'l; out: 'n2 * 'l2 >;
+      fx: < l_in: 'in_ * 'l; out:'n2 succ * ( 'out * 'l2 ) >
     > elt
-
-type ('main, 'sec) abs_elt =
-  ('kind,'nat,'n,'l,'k,'n2,'l2) abs_elt_0 elt
-  constraint
-    'main = 'kind * 'nat * 'n * 'l
-  constraint
-    'sec = 'k * 'n2 * 'l2
 
 let pp_elt: type a. Format.formatter -> a elt -> unit  = fun ppf -> function
   | Elt nat -> Format.fprintf ppf "%d" @@ Nat.to_int nat
@@ -81,27 +39,30 @@ let pp_elt: type a. Format.formatter -> a elt -> unit  = fun ppf -> function
   | Range r -> Format.fprintf ppf "%a" Range.pp r
 
 type _ t =
-  | [] : ('a,'b) empty_2 t
-  | (::) : <x:'x; fx:'fx> elt * 'x t -> 'fx t
+  | [] : ('a, 'b) empty_2 t
+  | (::) :
+      < k_in:'k; x: < l_in:'l; out:'out >; fx : <l_in:'fl; out:'f_out> > elt
+      * <in_:'n * 'l; out: 'out; kind:'k * 'ko > t ->
+    < in_:'n succ * 'fl; out:'f_out; kind: 'k * 'ko > t
 
-
-
-type ('a,'k) gen_l =
-  < k_in:'k; t_in:'a; t_out:empty; k_out:Nat.eqm> t
-type 'a eq = ('a,Nat.eqm) gen_l
+type ('a, 'k) gen_l =
+    < kind : 'k * Nat.eqm; in_ : 'a; out : empty > t
+type 'a eq = ('a, Nat.eqm) gen_l
 type 'a lt = ('a, Nat.ltm) gen_l
 type 'a l = 'a eq
 
-type ('a,'b) eq_s = <k_in:Nat.eqm; t_in:'a; t_out:'b; k_out:Nat.eqm> t
-type ('a,'b) lt_s = <k_in:Nat.ltm; t_in:'a; t_out:'b; k_out:Nat.ltm> t
-type ('a,'b) s_to_lt = <k_in:Nat.eqm; t_in:'a; t_out:'b; k_out:Nat.ltm> t
-type ('a,'b) s_to_eq = <k_in:Nat.ltm; t_in:'a; t_out:'b; k_out:Nat.eqm> t
-type ('a,'b) s = ('a,'b) s_to_eq
+type ('a, 'b, 'k ) gen_s =
+    < kind : 'k ; in_ : 'a; out : 'b > t
 
-type 'a vector = < n:z succ; list:'a * nil >
-type ('a,'b) matrix = < n:z succ succ ; list:'a * ('b *  nil) >
-type ('a,'b,'c) t3 = < n:z succ succ succ ; list:'a * ('b * ('c *  nil)) >
-type scalar = < n: z; list:nil  >
+type ('a, 'b) eq_s = ('a,'b, Nat.eqm * Nat.eqm ) gen_s
+type ('a, 'b) lt_s = ('a,'b, Nat.ltm * Nat.ltm ) gen_s
+type ('a, 'b) s_to_lt = ('a,'b, Nat.eqm * Nat.ltm ) gen_s
+type ('a, 'b) s_to_eq = ('a,'b, Nat.ltm * Nat.eqm ) gen_s
+type ('a, 'b) s = ('a, 'b) s_to_eq
+
+type 'a single = z succ * ('a * nil)
+type ('a, 'b) pair = z succ succ * ( 'a * ('b * nil) )
+type ('a, 'b, 'c) triple = z succ succ succ *  ( 'a * ('b * ('c * nil)))
 
 let rec order:type sh. sh t -> int = function
   | [] -> 0
@@ -134,8 +95,8 @@ let elt phy nat =
   else
     P_elt(phy,nat)
 
-let split_1: type k n a b. (<n:n succ; list:a * b>, k) gen_l
-  -> ( k * a * b * n, _ ) abs_elt * (<n:n; list:b>, k) gen_l =
+let split_1: type k n a b. (n succ * (a * b), k) gen_l
+  -> ( k, a, b, _ ) abs elt * (n *b, k) gen_l =
   function
   | Elt nat :: q -> Elt nat, q
   | P_elt (k,nat) :: q -> P_elt (k,nat) , q
@@ -169,7 +130,6 @@ let filter ?(final_stride=Stride.neutral) ~stride shape slice =
         let stride, sh = filter (offset stride) q sq in
         let phy = stride.Stride.size * phy in
         offset stride, (elt phy k) :: sh
-      | [], _ ::_ -> . (* unreachable *)
   in
   filter stride shape slice
 
@@ -185,7 +145,6 @@ let rec filter_with_copy: type sh sh2. sh eq -> (sh, sh2) s ->  sh2 eq =
       | P_elt (_,_) :: q, Range r :: sq ->
         Elt (Range.len r) :: filter_with_copy q sq
       | P_elt(_,k) :: q, All :: sq -> Elt k :: filter_with_copy q sq
-      | [], _ ::_ -> . (* unreachable *)
 
 (** Note: fortran layout *)
 let rec full_position_gen: type sh. shape:sh eq -> indices:sh lt
@@ -198,7 +157,6 @@ let rec full_position_gen: type sh. shape:sh eq -> indices:sh lt
     full_position_gen ~shape ~indices
       ~stride:Stride.( stride $ { size; offset= Nat.to_int i } )
   | [], [] -> stride
-  | [], _ :: _ -> . (* unreachable *)
 
 let full_position  ~stride ~shape ~indices =
   full_position_gen  ~shape ~indices ~stride
@@ -333,9 +291,6 @@ let rec iter_extended_dual: type sh sh'.
         )
 
 
-    | [], _ :: _ -> .
-
-
 let rec iter_masked_dual: type sh sh'.
   (sh lt -> sh' lt -> unit ) -> sh l -> (sh,sh') s_to_eq -> unit=
   fun f sh mask ->
@@ -369,13 +324,11 @@ let rec iter_masked_dual: type sh sh'.
           iter_masked_dual f sh mask
         )
 
-    | [], _ :: _ -> .
-
 (** Sliced shape function *)
 module Slice = struct
 let rec join: type li lm lo ni nm no.
-  (<list:li;n:ni> as 'i, <list:lm;n:nm> as 'm) s ->
-  ('m,<list:lo;n:no> as 'o) s ->
+  ( ni * li  as 'i,  nm * lm  as 'm) s ->
+  ('m, no * lo as 'o) s ->
   ('i,'o) s
   = fun slice1 slice2 ->
     match slice1, slice2 with
@@ -389,7 +342,6 @@ let rec join: type li lm lo ni nm no.
     Elt (Range.transpose r k) :: (join slice1 slice2)
   | Range r :: slice1, Range r2 :: slice2 ->
     Range (Range.compose r r2) :: (join slice1 slice2)
-  | [], _ :: _ ->  .
 
 let (>>) = join
 

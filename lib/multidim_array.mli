@@ -18,22 +18,22 @@ val set: < elt : 'elt; shape : 'sh > t -> 'sh Shape.lt -> 'elt -> unit
   [@@indexop.arraylike]
 
 val get_1 :
-  < elt : 'elt; shape : 'nat Shape.vector > t -> 'nat Nat.lt -> 'elt
+  < elt : 'elt; shape : 'nat Shape.single > t -> 'nat Nat.lt -> 'elt
   [@@indexop]
-val get_2: < elt : 'elt; shape : ('a, 'b) Shape.matrix > t ->
+val get_2: < elt : 'elt; shape : ('a, 'b) Shape.pair > t ->
   'a Nat.lt -> 'b Nat.lt -> 'elt
   [@@indexop]
-val get_3: < elt : 'elt; shape : ('a, 'b, 'c) Shape.t3 > t ->
+val get_3: < elt : 'elt; shape : ('a, 'b, 'c) Shape.triple > t ->
   'a Nat.lt -> 'b Nat.lt -> 'c Nat.lt -> 'elt
   [@@indexop]
 
 val set_1 :
-  < elt : 'elt; shape : 'nat Shape.vector > t -> 'nat Nat.lt -> 'elt -> unit
+  < elt : 'elt; shape : 'nat Shape.single > t -> 'nat Nat.lt -> 'elt -> unit
   [@@indexop]
-val set_2: < elt : 'elt; shape : ('a, 'b) Shape.matrix > t ->
+val set_2: < elt : 'elt; shape : ('a, 'b) Shape.pair > t ->
   'a Nat.lt -> 'b Nat.lt -> 'elt -> unit
   [@@indexop]
-val set_3: < elt : 'elt; shape : ('a, 'b, 'c) Shape.t3 > t ->
+val set_3: < elt : 'elt; shape : ('a, 'b, 'c) Shape.triple > t ->
   'a Nat.lt -> 'b Nat.lt -> 'c Nat.lt -> 'elt -> unit
   [@@indexop]
 
@@ -44,7 +44,7 @@ val unsafe_create : 'a Shape.eq -> 'b array -> < elt : 'b; shape : 'a > t
 val init_sh :
   'a Shape.eq -> ('a Shape.lt -> 'b) -> < elt : 'b; shape : 'a > t
 
-val ordinal : 'a Nat.eq -> < elt : 'a Nat.lt; shape : 'a Shape.vector > t
+val ordinal : 'a Nat.eq -> < elt : 'a Nat.lt; shape : 'a Shape.single > t
 val slice :
   ('a, 'b) Shape.s ->
   < elt : 'c; shape : 'a > t -> < elt : 'c; shape : 'b > t

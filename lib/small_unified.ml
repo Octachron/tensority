@@ -4,9 +4,9 @@ module M = Small_matrix
 module T = Tensor
 
 type _ t =
-    | Scalar: float ref -> < contr:Shape.scalar; cov: Shape.scalar > t
-    | Vec: 'a V.t -> < contr: 'a Shape.vector; cov: Shape.scalar > t
-    | Matrix: ('a * 'b) M.t -> < contr:'a Shape.vector; cov:'b Shape.vector > t
+    | Scalar: float ref -> < contr:Shape.empty; cov: Shape.empty > t
+    | Vec: 'a V.t -> < contr: 'a Shape.single; cov: Shape.empty > t
+    | Matrix: ('a * 'b) M.t -> < contr:'a Shape.single; cov:'b Shape.single > t
 
   let scalar f = Scalar f
   let vector n array = Vec(V.create n array)

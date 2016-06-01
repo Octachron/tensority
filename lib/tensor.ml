@@ -12,9 +12,9 @@ type 'x t =  { contr:'a Shape.eq
              }
   constraint 'x = < contr:'a; cov:'b >
 
-type 'dim vec = <contr:'dim Shape.vector; cov:Shape.scalar> t
-type ('l,'c) matrix = <contr:'l Shape.vector; cov: 'c Shape.vector> t
-type ('d1,'d2,'d3) t3 = <contr:('d1,'d2) Shape.matrix; cov: 'd3 Shape.vector> t
+type 'dim vec = <contr:'dim Shape.single; cov:Shape.empty> t
+type ('l,'c) matrix = <contr:'l Shape.single; cov: 'c Shape.single> t
+type ('d1,'d2,'d3) t3 = <contr:('d1,'d2) Shape.pair; cov: 'd3 Shape.single> t
 
 
 [%%indexop.arraylike
@@ -134,23 +134,21 @@ let vec_dim (vec: 'dim vec) =
   match contr_dims vec with
   | [P_elt (_, dim)] -> dim
   | [Elt dim] -> dim
-  | _ :: _ :: _ -> .
 
 
 module Index = struct
 
   open Shape
 
-  let pos_2 stride (v: _ vector l) (_w: _ vector l) r c=
+  let pos_2 stride (v: _ single l) (_w: _ single l) r c=
     let core dim_v =
       let open Stride in
       stride.offset + stride.size * Nat.( to_int r + dim_v * to_int c) in
     match v with
     | [Elt nat] -> core @@ Nat.to_int nat
     | [P_elt (dim,_) ] -> core dim
-    | _ :: _ :: _ -> .
 
-  let pos_3 (type a b) stride (v:(a,b) matrix l) (_w: _ vector l) r c h=
+  let pos_3 (type a b) stride (v:(a,b) pair l) (_w: _ single l) r c h=
     let core dim_r dim_c =
       let open Stride in
       stride.offset + stride.size * Nat.( to_int r + dim_r *
@@ -160,7 +158,6 @@ module Index = struct
     | [P_elt (n1,_); P_elt (n2,_) ] -> core n1 n2
     | [P_elt (n1,_); Elt n2 ] -> core n1 (Nat.to_int n2)
     | [Elt n1; P_elt (n2,_) ] -> core (Nat.to_int n1) n2
-    | _ :: _ :: _  :: _ -> .
 
 end
 
@@ -204,7 +201,6 @@ let endo_dim (mat: ('a,'a) matrix) =
   match mat.contr with
   | [P_elt (_,dim)] -> dim
   | [Elt dim] -> dim
-  | _ :: _ :: _ -> .
 
 module Sparse = struct
 
@@ -396,7 +392,7 @@ end
 
 (*
 let full_up: type left right tl.
-  (<l: left; tl:right>, <l:right; tl:tl> ) t -> (<l:left;tl:tl>, 'a Shape.scalar ) t =
+  (<l: left; tl:right>, <l:right; tl:tl> ) t -> (<l:left;tl:tl>, 'a Shape.empty ) t =
   fun t1 ->
     Shape.{ t1 with contr=t1.contr @ t1.cov; cov = [] }
 
@@ -452,7 +448,7 @@ and set = partial_blit
 
 exception Break
 
-let det ( mat : <contr:'a Shape.vector; cov:'a Shape.vector> t): float=
+let det ( mat : <contr:'a Shape.single; cov:'a Shape.single> t): float=
   let abs = abs_float in
   let dim = endo_dim mat in
   let mat = copy mat in

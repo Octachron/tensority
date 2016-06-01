@@ -9,10 +9,10 @@ type 'c t = {
   stride : Stride.t;
   array : float array;
 } constraint 'c = < contr : 'a; cov : 'b >
-type 'dim vec = < contr : 'dim Shape.vector; cov : Shape.scalar > t
-type ('l, 'c) matrix = < contr : 'l Shape.vector; cov : 'c Shape.vector > t
+type 'dim vec = < contr : 'dim Shape.single; cov : Shape.empty > t
+type ('l, 'c) matrix = < contr : 'l Shape.single; cov : 'c Shape.single > t
 type ('d1, 'd2, 'd3) t3 =
-  < contr : ('d1, 'd2) Shape.matrix; cov : 'd3 Shape.vector > t
+  < contr : ('d1, 'd2) Shape.pair; cov : 'd3 Shape.single > t
 
 val get: < contr : 'a; cov : 'b > t -> 'a Shape.lt * 'b Shape.lt -> float
   [@@indexop.arraylike]
@@ -138,7 +138,7 @@ val set :
   < contr : 'c; cov : 'd > t -> unit
   [@@indexop.stringlike]
 
-val det : < contr : 'a Shape.vector; cov : 'a Shape.vector > t -> float
+val det : < contr : 'a Shape.single; cov : 'a Shape.single > t -> float
 val normal : 'dim vec array -> 'dim vec
 
 include Signatures.tensor_operators with

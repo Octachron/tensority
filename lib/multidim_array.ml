@@ -24,12 +24,12 @@ let is_sparse m = Shape.is_sparse m.shape || Stride.is_neutral m.stride
 ]
 
 [%%indexop
-  let get_1: type nat. <shape:nat Shape.vector; elt:'elt> t
+  let get_1: type nat. <shape:nat Shape.single; elt:'elt> t
     -> nat Nat.lt -> 'elt = fun t nat ->
     let open Stride in
     t.array @? ( t.stride.offset + t.stride.size * Nat.to_int nat )
 
-  let get_2: type a b. <shape: (a,b) Shape.matrix; elt:'elt> t
+  let get_2: type a b. <shape: (a,b) Shape.pair; elt:'elt> t
     -> a Nat.lt -> b Nat.lt -> 'elt = fun t i j ->
     let open Shape in
     let open Stride in
@@ -40,9 +40,8 @@ let is_sparse m = Shape.is_sparse m.shape || Stride.is_neutral m.stride
     | [P_elt (phy,_); _ ] ->
       t.array @? Nat.( s.offset+ s.size *( to_int i + to_int j * phy) )
     | _ :: _ :: _  -> .
-    | [_] -> .
 
-  let get_3: type a b c. <shape: (a,b,c) Shape.t3; elt:'elt> t
+  let get_3: type a b c. <shape: (a,b,c) Shape.triple; elt:'elt> t
     -> a Nat.lt -> b Nat.lt -> c Nat.lt -> 'elt = fun t i j k ->
     let open Stride in
     let s = t.stride in
@@ -58,20 +57,18 @@ let is_sparse m = Shape.is_sparse m.shape || Stride.is_neutral m.stride
     | [P_elt(d1,_); P_elt (d2,_); _ ] -> get d1 d2
     | [ Elt d1; P_elt(d2,_) ; _ ] -> get (Nat.to_int d1) d2
     | [P_elt (d1,_); Elt d2; _ ] -> get d1 (Nat.to_int d2)
-    | _ :: _ :: _ :: _ :: _  -> .
-    | [ _; _] -> .
-    | [ _ ] -> .
+    |  _ :: _ :: _ :: _  -> .
 
 
 
-    let set_1: type nat. <shape:nat Shape.vector; elt:'elt> t
+    let set_1: type nat. <shape:nat Shape.single; elt:'elt> t
       -> nat Nat.lt -> 'elt -> unit = fun t i x ->
       let open Stride in
       let s = t.stride in
       t.array % (s.offset + s.size * Nat.to_int i) =: x
 
 
-    let set_2: type a b. <shape: (a,b) Shape.matrix; elt:'elt> t
+    let set_2: type a b. <shape: (a,b) Shape.pair; elt:'elt> t
     -> a Nat.lt -> b Nat.lt -> 'elt -> unit = fun t i j x ->
       let open Shape in
       let open Stride in
@@ -83,10 +80,9 @@ let is_sparse m = Shape.is_sparse m.shape || Stride.is_neutral m.stride
       | [P_elt (phy,_); _ ] ->
         let pos = s.offset+ s.size * Nat.( to_int i + to_int j * phy) in
         t.array % pos =: x
-      | _ :: _ :: _ :: _  -> .
-      | [_] -> .
+      |  _ :: _ :: _  -> .
 
-  let set_3: type a b c. <shape: (a,b,c) Shape.t3; elt:'elt> t
+  let set_3: type a b c. <shape: (a,b,c) Shape.triple; elt:'elt> t
     -> a Nat.lt -> b Nat.lt -> c Nat.lt -> 'elt -> unit = fun t i j k x ->
     let open Stride in
     let s = t.stride in
@@ -102,9 +98,7 @@ let is_sparse m = Shape.is_sparse m.shape || Stride.is_neutral m.stride
     | [P_elt(d1,_); P_elt (d2,_); _ ] -> set d1 d2
     | [ Elt d1; P_elt(d2,_) ; _ ] -> set (Nat.to_int d1) d2
     | [P_elt (d1,_); Elt d2; _ ] -> set d1 (Nat.to_int d2)
-    | _ :: _ :: _ :: _ :: _  -> .
-    | [ _; _] -> .
-    | [ _ ] -> .
+    |  _ :: _ :: _ :: _  -> .
 ]
 
 
@@ -129,7 +123,7 @@ let init_sh shape f =
   m
 
 
-let ordinal (nat: 'a Nat.eq) : <elt:'a Nat.lt; shape: 'a Shape.vector > t =
+let ordinal (nat: 'a Nat.eq) : <elt:'a Nat.lt; shape: 'a Shape.single > t =
   unsafe_create Shape.[Elt nat] @@ A.init (Nat.to_int nat) Nat.create
 
 let slice s m =
