@@ -1,11 +1,6 @@
 type 'a succ = 'a Nat.succ
 type z = Nat.z
 type nil = private Nil
-type ('l, 'n) id =
-    < fx : < list : 'l; order : 'n >; x : < list : 'l; order : 'n > >
-type ('a, 'l, 'n) cons =
-    < fx : < list : 'a -> 'l; order : 'n succ >;
-      x : < list : 'l; order : 'n > >
 
 type empty = < list : nil; n : z >
 type ('k1, 'k2) empty_2 =
@@ -95,6 +90,10 @@ val elt :
   int -> ('a, Nat.eqm) Nat.t
   -> (Nat.eqm * 'a * _ * _, _ ) abs_elt
 
+val split_1:
+  (<n:'n succ; list:'a * 'b>, 'k) gen_l
+  -> ( 'k * 'a * 'b * 'n, _ ) abs_elt * (<n:'n; list:'b>, 'k) gen_l
+
 val filter :
   ?final_stride:Stride.t ->
   stride:Stride.t -> 'a eq -> ('a, 'b) s -> Stride.t * 'b eq
@@ -139,9 +138,6 @@ module Slice :
       (< list : 'a; n : 'b >, < list : 'e; n : 'f >) s
     val position_gen :
       mult:int -> sum:int -> ('sh, 'filt) s -> 'sh l -> 'filt lt -> int * int
-    val split:
-      (<n:'n succ; list:'a * 'b>, 'k) gen_l
-      -> ( 'k * 'a * 'b * 'n, _ ) abs_elt * (<n:'n; list:'b>, 'k) gen_l
   end
 
 val pp : Format.formatter -> 'a t -> unit

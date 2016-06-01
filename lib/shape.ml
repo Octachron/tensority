@@ -4,11 +4,6 @@ type z = Nat.z
 
 type nil = private Nil
 
-type ('l,'n) id = < x:<order:'n;list:'l>; fx: <order:'n; list:'l> >
-type ('a,'l,'n) cons = <
-  x: <order:'n; list:'l>;
-  fx: < order:'n succ; list:('a -> 'l)> >
-
 type empty = <n:z; list:nil>
 type ('k1,'k2) empty_2 =
   < k_in:'k1; t_in:empty; t_out:empty; k_out:'k2>
@@ -112,7 +107,6 @@ let rec order:type sh. sh t -> int = function
   | [] -> 0
   | _::q -> 1 + order q
 
-
 let rec physical_size: type sh. sh eq -> int = function
   | [] -> 1
   | Elt nat::sh -> (Nat.to_int nat) * (physical_size sh)
@@ -139,6 +133,13 @@ let elt phy nat =
     Elt nat
   else
     P_elt(phy,nat)
+
+let split_1: type k n a b. (<n:n succ; list:a * b>, k) gen_l
+  -> ( k * a * b * n, _ ) abs_elt * (<n:n; list:b>, k) gen_l =
+  function
+  | Elt nat :: q -> Elt nat, q
+  | P_elt (k,nat) :: q -> P_elt (k,nat) , q
+
 
 let filter ?(final_stride=Stride.neutral) ~stride shape slice =
   let rec filter: type sh sh2. Stride.t -> sh eq -> (sh, sh2) s
@@ -412,13 +413,6 @@ let rec position_gen:
       ~mult:(Nat.to_int dim * mult) filter shape indices
   | [], [], _ -> mult, sum
   | _, _ , _ -> assert false (* unreachable *)
-
-let split: type k n a b. (<n:n succ; list:a * b>, k) gen_l
-  -> ( k * a * b * n, _ ) abs_elt * (<n:n; list:b>, k) gen_l =
-  function
-  | (Elt nat) as e :: q -> Elt nat, q
-  | (P_elt (k,nat)) as e :: q -> P_elt (k,nat) , q
-
 end
 
 let pp ppf shape =
