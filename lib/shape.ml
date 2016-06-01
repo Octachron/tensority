@@ -101,6 +101,15 @@ let split_1: type k n a b. (n succ * (a * b), k) gen_l
   | Elt nat :: q -> Elt nat, q
   | P_elt (k,nat) :: q -> P_elt (k,nat) , q
 
+let slice_1: type n a q. Stride.t -> a Nat.lt ->
+  (n succ * ( a * q)) eq -> Stride.t *( n * q ) eq =
+  fun stride nat shape -> match shape with
+    | Elt s :: q ->
+      Stride.( stride $ { size = Nat.to_int s; offset = Nat.to_int nat } ),
+      q
+    | P_elt (s,_) :: q ->
+      Stride.( stride $ { size = s; offset = Nat.to_int nat } ),
+      q
 
 let filter ?(final_stride=Stride.neutral) ~stride shape slice =
   let rec filter: type sh sh2. Stride.t -> sh eq -> (sh, sh2) s

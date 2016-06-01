@@ -126,6 +126,10 @@ let init_sh shape f =
 let ordinal (nat: 'a Nat.eq) : <elt:'a Nat.lt; shape: 'a Shape.single > t =
   unsafe_create Shape.[Elt nat] @@ A.init (Nat.to_int nat) Nat.create
 
+let slice_first nat m =
+  let stride, shape = Shape.slice_1 m.stride nat m.shape in
+  { m with shape; stride }
+
 let slice s m =
   let stride, shape = Shape.filter ~stride:m.stride m.shape s in
   { m with shape; stride }

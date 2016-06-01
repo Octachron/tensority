@@ -74,9 +74,13 @@ val split_1:
   ('n succ * ('a * 'b) , 'k) gen_l
   -> ( 'k, 'a, 'b, _ ) abs elt * ('n * 'b, 'k) gen_l
 
+val slice_1:
+  Stride.t -> 'a Nat.lt -> ('n succ * ( 'a * 'q)) eq ->
+  Stride.t * ( 'n * 'q ) eq
+
 val filter :
-  ?final_stride:Stride.t ->
-  stride:Stride.t -> 'a eq -> ('a, 'b) s -> Stride.t * 'b eq
+  ?final_stride:Stride.t -> stride:Stride.t -> 'a eq -> ('a, 'b) s ->
+  Stride.t * 'b eq
 val filter_with_copy : 'sh eq -> ('sh, 'sh2) s -> 'sh2 eq
 val full_position_gen :
   shape:'sh eq -> indices:'sh lt -> stride:Stride.t -> Stride.t

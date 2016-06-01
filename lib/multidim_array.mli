@@ -45,6 +45,11 @@ val init_sh :
   'a Shape.eq -> ('a Shape.lt -> 'b) -> < elt : 'b; shape : 'a > t
 
 val ordinal : 'a Nat.eq -> < elt : 'a Nat.lt; shape : 'a Shape.single > t
+
+val slice_first:
+  'a Nat.lt -> <elt:'c; shape: 'n Nat.succ * ('a * ' b) > t ->
+  <elt:'c; shape: 'n * 'b > t
+
 val slice :
   ('a, 'b) Shape.s ->
   < elt : 'c; shape : 'a > t -> < elt : 'c; shape : 'b > t
