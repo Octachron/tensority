@@ -59,12 +59,19 @@ val blit :
 
 val map :
   ('a -> 'b) -> < elt : 'a; shape : 'c > t -> < elt : 'b; shape : 'c > t
+val map_sh :
+  ('sh Shape.lt -> 'a -> 'b) -> < elt : 'a; shape : 'sh > t ->
+  < elt : 'b; shape : 'sh > t
+
+
 val map2 :
   ('a -> 'b -> 'c) ->
   < elt : 'a; shape : 'd > t ->
   < elt : 'b; shape : 'd > t -> < elt : 'c; shape : 'd > t
 
 val iter : ('a -> unit) -> < elt : 'a; shape : 'b > t -> unit
+val iter_sh: ( 'b Shape.lt -> 'a -> unit) -> < elt : 'a; shape : 'b > t -> unit
+
 val fold_all_left :
   ('a -> 'b -> 'a) -> 'a -> < elt : 'b; shape : 'c > t -> 'a
 

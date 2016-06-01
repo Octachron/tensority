@@ -39,7 +39,6 @@ let is_sparse m = Shape.is_sparse m.shape || Stride.is_neutral m.stride
       t.array @? Nat.( s.offset + s.size *( to_int i + to_int j * to_int dim) )
     | [P_elt (phy,_); _ ] ->
       t.array @? Nat.( s.offset+ s.size *( to_int i + to_int j * phy) )
-    | _ :: _ :: _  -> .
 
   let get_3: type a b c. <shape: (a,b,c) Shape.triple; elt:'elt> t
     -> a Nat.lt -> b Nat.lt -> c Nat.lt -> 'elt = fun t i j k ->
@@ -57,7 +56,6 @@ let is_sparse m = Shape.is_sparse m.shape || Stride.is_neutral m.stride
     | [P_elt(d1,_); P_elt (d2,_); _ ] -> get d1 d2
     | [ Elt d1; P_elt(d2,_) ; _ ] -> get (Nat.to_int d1) d2
     | [P_elt (d1,_); Elt d2; _ ] -> get d1 (Nat.to_int d2)
-    |  _ :: _ :: _ :: _  -> .
 
 
 
@@ -80,7 +78,6 @@ let is_sparse m = Shape.is_sparse m.shape || Stride.is_neutral m.stride
       | [P_elt (phy,_); _ ] ->
         let pos = s.offset+ s.size * Nat.( to_int i + to_int j * phy) in
         t.array % pos =: x
-      |  _ :: _ :: _  -> .
 
   let set_3: type a b c. <shape: (a,b,c) Shape.triple; elt:'elt> t
     -> a Nat.lt -> b Nat.lt -> c Nat.lt -> 'elt -> unit = fun t i j k x ->
@@ -98,7 +95,6 @@ let is_sparse m = Shape.is_sparse m.shape || Stride.is_neutral m.stride
     | [P_elt(d1,_); P_elt (d2,_); _ ] -> set d1 d2
     | [ Elt d1; P_elt(d2,_) ; _ ] -> set (Nat.to_int d1) d2
     | [P_elt (d1,_); Elt d2; _ ] -> set d1 (Nat.to_int d2)
-    |  _ :: _ :: _ :: _  -> .
 ]
 
 
@@ -188,21 +184,11 @@ module Sparse = struct
       (fun sh sh' -> to_.(sh) <- from.(sh') )
       to_.shape filter
 
-  let iter f m =
-    Shape.iter (fun sh -> f m.(sh)) m.shape
-
   let iter_sh f m =
     Shape.iter (fun sh -> f sh m.(sh)) m.shape
 
-  let map_sh f m =
-    if len m = 0 then
-      m
-    else (
-      let m = { m with array = A.make (len m) (m.array @? 0) } in
-      Shape.iter_on m.shape (fun sh -> m.(sh) <- f sh m.(sh) );
-      m
-    )
-
+  let map_sh f m  =
+      init_sh m.shape (fun sh -> f sh m.(sh) )
 
   let blit: from:'sh t -> to_:'sh t -> unit =
     fun ~from ~to_ ->
@@ -216,12 +202,12 @@ module Sparse = struct
   let map2 f (m: <shape:'sh; elt:'a > t) (m2: <shape:'sh; elt:'b > t) =
     init_sh m.shape (fun sh -> f m.(sh) m2.(sh) )
 
-let iter f m =
-  Shape.iter_on m.shape (fun sh -> f m.(sh) )
+  let iter f m =
+    Shape.iter_on m.shape (fun sh -> f m.(sh) )
 
-let fold_all_left f acc m =
-  let acc =ref acc in
-  Shape.iter_on m.shape (fun sh ->  acc := f !acc m.(sh))
+  let fold_all_left f acc m =
+    let acc =ref acc in
+    Shape.iter_on m.shape (fun sh ->  acc := f !acc m.(sh))
   ; !acc
 
   end
@@ -244,7 +230,11 @@ let map2 f m m2 =
   ( if is_sparse m || is_sparse m2 then Sparse.map2 else Dense.map2) f m m2
 
 let iter f m =
-  Shape.iter_on m.shape (fun sh -> f m.(sh) )
+  if is_sparse m then Sparse.iter f m else Dense.iter f m
+
+let iter_sh f = Sparse.iter_sh f
+
+let map_sh f = Sparse.map_sh f
 
 let fold_all_left f acc m =
   (if is_sparse m then
