@@ -26,14 +26,14 @@ val if_ : 'a option -> ('a -> 'b) -> (unit -> 'b) -> 'b
 val ( %? ) : ('a, [ `Lt ]) t -> ('a, [ `Eq ]) t -> ('a, [ `Lt ]) t
 
 val iter : ('a lt -> unit) -> 'a eq -> unit
-val fold : ('a -> 'b lt -> 'a) -> 'a -> 'b eq -> 'a
-
+val iter_on : 'a eq -> ('a lt -> unit) -> unit
 val partial_iter : start:int -> stop:'a eq -> ('a lt -> unit) -> unit
 val typed_partial_iter : start:'a lt -> stop:'a eq -> ('a lt -> unit) -> unit
-val iter_on : 'a eq -> ('a lt -> unit) -> unit
-val fold_nat : ('acc -> 'a lt -> 'acc) -> 'acc -> 'a eq -> 'acc
 
-val partial_fold_nat :
+
+val fold : ('a -> 'b lt -> 'a) -> 'a -> 'b eq -> 'a
+val fold_on: 'b eq -> 'a -> ('a -> 'b lt -> 'a) -> 'a
+val partial_fold :
   start:int -> stop:'a eq -> acc:'acc -> ('acc -> 'a lt -> 'acc) -> 'acc
 
 val zero : ('a, 'b) t

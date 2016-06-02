@@ -46,14 +46,7 @@ let iter (f:'a lt -> unit) (n:'a eq) : unit =
   for i = 0 to (to_int n - 1) do
     f @@ create i
   done
-
-let fold f acc n =
-  let acc = ref acc in
-  iter (fun n -> acc := f !acc n) n;
-  !acc
-
-let (|>?) x f = match x with Some x -> Some(f x) | None -> None
-let (||?) opt x = match opt with Some x -> x | None -> x
+let iter_on n f = iter f n
 
 let partial_iter  ~start ~(stop: 'a eq) (f:'a lt -> unit): unit =
   for i=start to (to_int stop - 1) do
@@ -65,16 +58,12 @@ let typed_partial_iter  ~(start: 'a lt) ~(stop: 'a eq) (f:'a lt -> unit): unit =
     f @@ create i
   done
 
-
-let iter_on n f = iter f n
-
-let fold_nat (f:'acc -> 'a lt -> 'acc) acc (n:'a eq) =
+let fold f acc n =
   let acc = ref acc in
-  iter (fun i -> acc := f !acc i) n;
+  iter (fun n -> acc := f !acc n) n;
   !acc
-
-
-let partial_fold_nat
+let fold_on n acc f = fold f acc n
+let partial_fold
     ~start
     ~(stop:'a eq)
     ~acc
@@ -83,6 +72,11 @@ let partial_fold_nat
   let acc = ref acc in
   partial_iter  ~start ~stop (fun i -> acc := f !acc i);
   !acc
+
+
+let (|>?) x f = match x with Some x -> Some(f x) | None -> None
+let (||?) opt x = match opt with Some x -> x | None -> x
+
 
 let zero = create 0
 let succ nat = succ @@ to_int nat

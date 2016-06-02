@@ -1,13 +1,9 @@
-module A = Array
-exception Dimension_error of string * int * int
-val ( % ) : 'a array -> int -> 'a -> unit
-val ( =: ) : ('a -> 'b) -> 'a -> 'b
-val ( @? ) : 'a array -> int -> 'a
 type 'a t = {
   shape : 'sh Shape.l;
   stride : Stride.t;
   array : 'elt array;
 } constraint 'a = < elt : 'elt; shape : 'sh >
+
 val size : < elt : 'a; shape : 'b > t -> int
 val is_sparse : < elt : 'a; shape : 'b > t -> bool
 
@@ -74,6 +70,11 @@ val iter_sh: ( 'b Shape.lt -> 'a -> unit) -> < elt : 'a; shape : 'b > t -> unit
 
 val fold_all_left :
   ('a -> 'b -> 'a) -> 'a -> < elt : 'b; shape : 'c > t -> 'a
+
+val fold_top_left:
+  ('acc -> < elt:'elt; shape: 'n * 'l > t -> 'acc) -> 'acc ->
+  <elt:'elt; shape: 'n Nat.succ * ( 'any * 'l ) > t ->
+  'acc
 
 val partial_copy :
   ?deep_copy:('a -> 'a) ->

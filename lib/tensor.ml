@@ -469,7 +469,7 @@ let det ( mat : <contr:'a Shape.single; cov:'a Shape.single> t): float=
       if abs_k > max then (k,abs_k) else (i,max) in
     let start = Nat.succ j and acc = j, abs mat.{!j,j} in
     let i, max  =
-      Nat.partial_fold_nat ~stop:dim ~start ~acc find_max in
+      Nat.partial_fold ~stop:dim ~start ~acc find_max in
     if max > 0. then swap j i else raise Break in
   let transl ?(start=0) ~from ~to_ coeff =
     Nat.partial_iter ~start ~stop:dim (fun j ->
@@ -483,7 +483,7 @@ let det ( mat : <contr:'a Shape.single; cov:'a Shape.single> t): float=
     Nat.partial_iter ~start:(Nat.succ i) ~stop:dim
       (fun to_ -> transl ~start:(Nat.to_int i) ~from:i ~to_ (-. mat.{!to_,i}/. c) )
       )
-  ; Nat.fold_nat (fun p k -> p *. mat.{!k,k} ) sign.contents dim
+  ; Nat.fold (fun p k -> p *. mat.{!k,k} ) sign.contents dim
   with Break -> 0.
 
 (** Given (n-1) vectors of dimension n, compute the normal to the hyperplane

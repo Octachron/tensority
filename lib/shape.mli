@@ -66,13 +66,13 @@ val physical_size : 'sh eq -> int
 val logical_size : 'sh eq -> int
 val is_sparse : 'sh eq -> bool
 val detach : 'sh eq -> 'sh eq
-val elt :
-  int -> ('a, Nat.eqm) Nat.t
-  -> (Nat.eqm, 'a, _ , _ ) abs elt
+
+val elt : int -> 'a Nat.eq -> (Nat.eqm, 'a, _ , _ ) abs elt
 
 val split_1:
   ('n succ * ('a * 'b) , 'k) gen_l
   -> ( 'k, 'a, 'b, _ ) abs elt * ('n * 'b, 'k) gen_l
+val split_1_nat: ('n succ * ('a * 'b)) eq -> 'a Nat.eq * ('n * 'b) eq
 
 val slice_1:
   Stride.t -> 'a Nat.lt -> ('n succ * ( 'a * 'q)) eq ->

@@ -150,6 +150,7 @@ let map2 f (m: <shape:'sh; elt:'a > t) (m2: <shape:'sh; elt:'b > t) =
 let iter f m =
   A.iter f m.array
 
+
 let fold_all_left f acc m =
   A.fold_left f acc m.array
 
@@ -242,6 +243,12 @@ let fold_all_left f acc m =
   else
     Dense.fold_all_left)
       f acc m
+
+let fold_top_left f acc m =
+  let k, _ = Shape.split_1_nat m.shape in
+  Nat.fold_on k acc (fun acc nat ->
+      f acc (slice_first nat m)
+    )
 
 let partial_copy ?(deep_copy=fun x -> x) s m =
   Sparse.copy ~deep_copy @@ slice s m

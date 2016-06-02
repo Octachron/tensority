@@ -101,6 +101,13 @@ let split_1: type k n a b. (n succ * (a * b), k) gen_l
   | Elt nat :: q -> Elt nat, q
   | P_elt (k,nat) :: q -> P_elt (k,nat) , q
 
+let split_1_nat: type n a b. (n succ * (a * b)) eq
+  -> a Nat.eq * ( n *b ) eq =
+  function
+  | Elt nat :: q -> nat, q
+  | P_elt (_,nat) :: q -> nat , q
+
+
 let slice_1: type n a q. Stride.t -> a Nat.lt ->
   (n succ * ( a * q)) eq -> Stride.t *( n * q ) eq =
   fun stride nat shape -> match shape with
