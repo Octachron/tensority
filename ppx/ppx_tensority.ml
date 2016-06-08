@@ -4,9 +4,9 @@ module T = H.Typ
 
 type tensor_kind = { fn: Parsetree.expression; name:string }
 let ma =
-  { fn = [%expr Multidim_array.unsafe_create]; name = "array" }
+  { fn = [%expr Multidim_array.Unsafe.create]; name = "array" }
 let tensor =
-  { fn = [%expr Tensor.unsafe_create]; name = "tensor" }
+  { fn = [%expr Tensor.Unsafe.create]; name = "tensor" }
 
 
 type 'a loc = 'a Location.loc
@@ -289,7 +289,7 @@ module Array_lit = struct
   | { pexp_desc = Pexp_tuple s; _ } as e ->
     let a = {e with pexp_desc = Pexp_array s} in
     let nat = Ints.Eq.int loc @@ List.length s in
-  [%expr unsafe_create Shape.[[%e nat]] [%e a]][@metaloc loc]
+  [%expr Unsafe.create Shape.[[%e nat]] [%e a]][@metaloc loc]
   | _ ->
     error loc "expected tuple in [%%vec ...]"
 

@@ -1,18 +1,31 @@
-type 'a t = {
-  shape : 'sh Shape.l;
-  stride : Stride.t;
-  array : 'elt array;
-} constraint 'a = < elt : 'elt; shape : 'sh >
+type 'a t  constraint 'a = < elt : 'elt; shape : 'sh >
+(** Values of type [<elt:'e; shape: a_1 * ( a_2 * ...( a_n * nil ) ) > t]
+    are multidimensional arrays with dimension a_1, ..., a_n where a_1 to
+    a_n are type-level representation of integer *)
 
+(** {1 Size and shape } *)
+
+(** [size m] is the number of elements in the array *)
 val size : < elt : 'a; shape : 'b > t -> int
+
+(** [physical_size m] is the length of the underlying physical storage *)
+val physical_size : < elt : 'a; shape : 'b > t -> int
+
+(** [shape m] is the shape of the array *)
+val shape : < elt : 'a; shape : 'b > t -> 'b Shape.l
+
+(** [ is_sparse m ] is true when the logical size of the array is less
+    than the physical size of this array *)
 val is_sparse : < elt : 'a; shape : 'b > t -> bool
 
+(** {1 Generic indexing operators} *)
 val get: < elt : 'elt; shape : 'sh > t -> 'sh Shape.lt -> 'elt
   [@@indexop.arraylike]
 
 val set: < elt : 'elt; shape : 'sh > t -> 'sh Shape.lt -> 'elt -> unit
   [@@indexop.arraylike]
 
+(** {1 Specialized indexing operators *)
 val get_1 :
   < elt : 'elt; shape : 'nat Shape.single > t -> 'nat Nat.lt -> 'elt
   [@@indexop]
@@ -33,10 +46,12 @@ val set_3: < elt : 'elt; shape : ('a, 'b, 'c) Shape.triple > t ->
   'a Nat.lt -> 'b Nat.lt -> 'c Nat.lt -> 'elt -> unit
   [@@indexop]
 
-val len : < elt : 'a; shape : 'b > t -> int
-val shape : < elt : 'a; shape : 'b > t -> 'b Shape.l
-val unsafe_create : 'a Shape.eq -> 'b array -> < elt : 'b; shape : 'a > t
+(** {1 Unsafe functions *)
+module Unsafe : sig
+val create : 'a Shape.eq -> 'b array -> < elt : 'b; shape : 'a > t
+end
 
+(** {1 Creation function} *)
 val init_sh :
   'a Shape.eq -> ('a Shape.lt -> 'b) -> < elt : 'b; shape : 'a > t
 
@@ -75,6 +90,11 @@ val fold_top_left:
   ('acc -> < elt:'elt; shape: 'n * 'l > t -> 'acc) -> 'acc ->
   <elt:'elt; shape: 'n Nat.succ * ( 'any * 'l ) > t ->
   'acc
+
+val copy:
+  ?deep_copy:('a -> 'a) ->
+  < elt : 'a; shape : 'b > t -> < elt : 'a; shape : 'b > t
+
 
 val partial_copy :
   ?deep_copy:('a -> 'a) ->

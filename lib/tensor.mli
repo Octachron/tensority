@@ -1,18 +1,17 @@
 module MA = Multidim_array
-module A = Array
-val ( @? ) : 'a array -> int -> 'a
-val ( % ) : 'a array -> int -> 'a -> unit
-val ( =: ) : ('a -> 'b) -> 'a -> 'b
-type 'c t = {
-  contr : 'a Shape.eq;
-  cov : 'b Shape.eq;
-  stride : Stride.t;
-  array : float array;
-} constraint 'c = < contr : 'a; cov : 'b >
+
+type 'c t constraint 'c = < contr : 'a; cov : 'b >
 type 'dim vec = < contr : 'dim Shape.single; cov : Shape.empty > t
 type ('l, 'c) matrix = < contr : 'l Shape.single; cov : 'c Shape.single > t
 type ('d1, 'd2, 'd3) t3 =
   < contr : ('d1, 'd2) Shape.pair; cov : 'd3 Shape.single > t
+
+module Unsafe : sig
+val create :
+  ?stride:Stride.t ->
+  contr:'a Shape.eq ->
+  cov:'b Shape.eq -> 'c array -> < contr : 'a; cov : 'b > t
+end
 
 val get: < contr : 'a; cov : 'b > t -> 'a Shape.lt * 'b Shape.lt -> float
   [@@indexop.arraylike]
@@ -29,10 +28,6 @@ val is_sparse : < contr : 'a; cov : 'b > t -> bool
 
 val full : Stride.t
 
-val unsafe_create :
-  ?stride:Stride.t ->
-  contr:'a Shape.eq ->
-  cov:'b Shape.eq -> 'c array -> < contr : 'a; cov : 'b > t
 
 val const :
   contr:'a Shape.eq -> cov:'b Shape.eq -> float -> < contr : 'a; cov : 'b > t

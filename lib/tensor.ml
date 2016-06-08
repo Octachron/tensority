@@ -16,6 +16,16 @@ type 'dim vec = <contr:'dim Shape.single; cov:Shape.empty> t
 type ('l,'c) matrix = <contr:'l Shape.single; cov: 'c Shape.single> t
 type ('d1,'d2,'d3) t3 = <contr:('d1,'d2) Shape.pair; cov: 'd3 Shape.single> t
 
+let full = Stride.neutral
+module Unsafe = struct
+let create ?(stride=full) ~contr ~cov array =
+  let len = (Shape.physical_size cov) * (Shape.physical_size contr) in
+  let len' = A.length array in
+  if len <> len' then
+    raise @@ Signatures.Dimension_error( "Tensor.unsafe_create", len, len' )
+  ; {cov;contr; array=A.make len 0.; stride  }
+
+end
 
 [%%indexop.arraylike
   let get: <contr:'a; cov:'b> t -> ('a Shape.lt * 'b Shape.lt ) -> float = fun t
@@ -44,15 +54,6 @@ let is_sparse t = Shape.(
     not(Stride.is_neutral t.stride) || is_sparse t.contr || is_sparse t.cov
   )
 
-let full = Stride.neutral
-
-let unsafe_create ?(stride=full) ~contr ~cov array =
-  let len = (Shape.physical_size cov) * (Shape.physical_size contr) in
-  let len' = A.length array in
-  if len <> len' then
-    raise @@ Signatures.Dimension_error( "Tensor.unsafe_create", len, len' )
-  ; {cov;contr; array=A.make len 0.; stride  }
-[@@warning "-32"]
 
 let const ~contr ~cov x=
   let cov = Shape.detach cov and contr = Shape.detach contr in

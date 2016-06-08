@@ -10,6 +10,17 @@ type 'x t = { shape: 'sh Shape.l; stride: Stride.t; array: 'elt array }
 let size m = Shape.logical_size m.shape
 let is_sparse m = Shape.is_sparse m.shape || Stride.is_neutral m.stride
 
+module Unsafe = struct
+
+  let create shape array =
+    let shape = Shape.detach shape in
+    let len =  A.length array and size = Shape.physical_size shape in
+    if len <> size  then
+      raise @@ Dimension_error("Multidim_array.create_unsafe", size, len)
+    else
+      {shape; array; stride = Stride.neutral }
+end
+
 [%%indexop.arraylike
   let get: <shape:'sh; elt:'elt> t -> 'sh Shape.lt -> 'elt = fun t indices ->
     let p =
@@ -98,16 +109,9 @@ let is_sparse m = Shape.is_sparse m.shape || Stride.is_neutral m.stride
 ]
 
 
-let len t = A.length t.array
+let physical_size t = A.length t.array
 let shape t = t.shape
 
-let unsafe_create shape array =
-  let shape = Shape.detach shape in
-  let len =  A.length array and size = Shape.physical_size shape in
-  if len <> size  then
-    raise @@ Dimension_error("Multidim_array.create_unsafe", size, len)
-  else
-    {shape; array; stride = Stride.neutral }
 
 let init_sh shape f =
   let shape = Shape.detach shape in
@@ -120,7 +124,7 @@ let init_sh shape f =
 
 
 let ordinal (nat: 'a Nat.eq) : <elt:'a Nat.lt; shape: 'a Shape.single > t =
-  unsafe_create Shape.[Elt nat] @@ A.init (Nat.to_int nat) Nat.create
+  Unsafe.create Shape.[Elt nat] @@ A.init (Nat.to_int nat) Nat.create
 
 let slice_first nat m =
   let stride, shape = Shape.slice_1 m.stride nat m.shape in
@@ -144,7 +148,8 @@ let map f m =
   { m with array }
 
 let map2 f (m: <shape:'sh; elt:'a > t) (m2: <shape:'sh; elt:'b > t) =
-  let array = A.init (len m) (fun i -> f (m.array @? i) (m2.array @? i) ) in
+  let array = A.init (physical_size m)
+      (fun i -> f (m.array @? i) (m2.array @? i) ) in
   { m with array }
 
 let iter f m =
@@ -172,9 +177,9 @@ module Sparse = struct
   let copy ?(deep_copy=(fun x->x)) m =
     let size = Shape.logical_size m.shape and shape = Shape.detach m.shape in
     if size = 0 then
-      unsafe_create shape [| |]
+      Unsafe.create shape [| |]
     else
-      let m' = unsafe_create shape @@ A.make size (m.array @? 0) in
+      let m' = Unsafe.create shape @@ A.make size (m.array @? 0) in
       Shape.iter_on m.shape (fun sh -> m'.(sh) <- deep_copy m.(sh))
     ; m'
 
@@ -213,6 +218,10 @@ module Sparse = struct
 
   end
 
+let copy ?(deep_copy= fun x -> x ) m =
+  if is_sparse m then
+    Sparse.copy ~deep_copy m
+  else Dense.copy ~deep_copy m
 
 let blit ~from ~to_ =
   if is_sparse from || is_sparse to_ then
@@ -226,6 +235,11 @@ let map f m =
    else
      Dense.map
   ) f m
+
+let map_first f m =
+  let nat, _  = Shape.split_1_nat m.shape in
+  let open Shape in
+  init_sh [Elt nat] (fun [Elt n] -> f @@ slice_first n m)
 
 let map2 f m m2 =
   ( if is_sparse m || is_sparse m2 then Sparse.map2 else Dense.map2) f m m2
