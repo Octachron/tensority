@@ -23,6 +23,14 @@ let path_prefix namespace s =
   let name = namespace.name ^"__"^ s in
   namespace.path / name
 
+let odoc name =  name ^ ".odoc"
+
+let path_prefix_doc namespace s =
+  let s = odoc @@  Filename.chop_extension s in
+  let name = namespace.name ^"__"^ s in
+  namespace.path / name
+
+
 let module_prefix namespace s =
   namespace.name ^"__"^ s
 
@@ -31,6 +39,8 @@ let alias_file ?(impl=false) {name;path} =
   path / name
 
 let mllib {name;_} = "lib_" ^ name ^ ".mllib"
+let odocl {name;_} =  name ^ ".odocl"
+
 
 let find_namespaces () =
   let files = Array.to_list @@ Sys.readdir "." in
@@ -42,7 +52,11 @@ let find_namespaces () =
 let tag_namespace ({name;path} as n) =
   let files = Array.to_list @@ Sys.readdir path in
   let tag_one file =
-    tag_file (path_prefix n file)  [sp "with_map(%s)" name] in
+    let tag = [sp "with_map(%s)" name] in
+    if Filename.check_suffix file ".mli" then (
+      tag_file (path_prefix_doc n file) tag
+    )
+  ; tag_file (path_prefix n file) tag  in
   List.iter tag_one files;
   tag_file (alias_file n) ["map"]
 
@@ -86,17 +100,20 @@ let make_aliases ({path; name} as n)  modules =
       Echo( content, impl_path)
     ] )
 
-let make_mllib ({name; _ } as n) modules =
+let make_module_list kind ({name; _ } as n) modules =
   let to_name file =
     file
     |> module_prefix n |> String.capitalize_ascii
     |> sp "@[%s@]@;" in
-  let target = mllib n in
+  let target = kind n in
   let target_path = build_path target in
   C.Echo (
     (  String.capitalize_ascii name ^ "\n" ) :: List.map to_name modules
   , target_path
   )
+
+let make_mllib = make_module_list mllib
+let make_odocl = make_module_list odocl
 
 let librule namespace =
   rule
@@ -104,17 +121,18 @@ let librule namespace =
   ~dep:"_tags"
   ~prods:[ alias_file namespace
          ; alias_file ~impl:true namespace
-         ; mllib namespace ]
+         ; mllib namespace; odocl namespace ]
   ( fun _env build ->
       let {name;path} = namespace in
       let files = Sys.readdir ( ".." / path ) |> Array.to_list |> extract_modules in
       let mk_aliases  =  make_aliases namespace files in
       let mk_mllib = make_mllib namespace files in
+      let mk_odocl = make_odocl namespace files in
       let _intermediary =  build (
           List.map
             ( fun file -> [ path / (name  ^"__"^file )] )
             files) in
-      C.Seq [ mk_aliases; mk_mllib ]
+      C.Seq [ mk_aliases; mk_mllib; mk_odocl ]
   )
 
 
@@ -159,6 +177,9 @@ let namespace namespace =
       ( C.S C.[ A "-no-alias-deps"; A "-w"; A "-49" ] )
   ; pflag ["ocaml";"compile"] "with_map"
       (fun name ->  C.S [ C.A "-no-alias-deps"; C.A "-open"
+                        ; C.A (String.capitalize_ascii name) ]  )
+  ; pflag ["doc";"ocaml"] "with_map"
+      (fun name ->  C.S [ C.A "-open"
                         ; C.A (String.capitalize_ascii name) ]  )
   ; prefix_ml namespace
   ; prefix_mli namespace
