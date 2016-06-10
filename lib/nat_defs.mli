@@ -92,8 +92,8 @@ sig
   val _1 : ('a * 'd, [< `_1 of 'a | 'd Gtp._2 | ('d,_) s Lep._0 ], _ ) f
   val _0 : ('a * 'd, [< `_0 of 'a | 'd Gtp._1 ], _ ) f0
 
-  val close: int * ((_,'x) filter_zero * 'd * nz) lt ->  'x lt
-  val close_z : int * ('x * 'd * nz) lt ->  'x lt
+  val nat: int * ((_,'x) filter_zero * 'd * nz) lt ->  'x lt
+  val nat_z : int * ('x * 'd * nz) lt ->  'x lt
 
   val ( @ ) : ('a -> 'b) -> 'a -> 'b
   end
@@ -138,8 +138,8 @@ sig
   val _1 : ('a * 'd, [< `_1 of 'a | 'd Gtp._2 | ('d,_) s Lep._0 ], _ ) f
   val _0 : ('a * 'd, [< `_0 of 'a | 'd Gtp._1 ], _ ) f0
 
-  val close: int * ((_,'x) filter_zero * 'd * nz) le ->  'x le
-  val close_z : int * ('x * 'd * nz) le ->  'x le
+  val nat: int * ((_,'x) filter_zero * 'd * nz) le ->  'x le
+  val nat_z : int * ('x * 'd * nz) le ->  'x le
 
   val ( @ ) : ('a -> 'b) -> 'a -> 'b
   end
@@ -170,7 +170,7 @@ module Size :
     val _2 : ('a, [ `_2 of 'a ], 'b) d
     val _1 : ('a, [ `_1 of 'a ], 'b) d
     val _0 : ('a, [ `_0 of 'a ], 'b) d0
-    val close : int * ('digits * nz) eq -> 'digits eq
+    val nat : int * ('digits * nz) eq -> 'digits eq
     val ( @ ) : ('a -> 'b) -> 'a -> 'b
   end
 

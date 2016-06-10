@@ -244,7 +244,7 @@ let iter_sep ~up ~down ~sep ~f shape =
   let rec iter: type sh.
     sep:(int -> unit) -> f:(sh lt -> unit) -> level:int -> sh eq -> unit =
     fun ~sep ~f ~level ->
-      let one = Nat_defs.Size.( close @ _1n ) in
+      let one = Nat_defs._1 in
       function
       | [] -> f []
       | Elt n :: sh ->
