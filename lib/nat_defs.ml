@@ -27,6 +27,18 @@ module Lep = struct
   type +'a _9 = [ `_9 of 'a | 'a _8 ]
 end
 
+module Sp_lep = struct
+  type +'a _1 = [ `_1 of 'a ]
+  type +'a _2 = [ `_2 of 'a | 'a _1 ]
+  type +'a _3 = [ `_3 of 'a | 'a _2 ]
+  type +'a _4 = [ `_4 of 'a | 'a _3 ]
+  type +'a _5 = [ `_5 of 'a | 'a _4 ]
+  type +'a _6 = [ `_6 of 'a | 'a _5 ]
+  type +'a _7 = [ `_7 of 'a | 'a _6 ]
+  type +'a _8 = [ `_8 of 'a | 'a _7 ]
+  type +'a _9 = [ `_9 of 'a | 'a _8 ]
+end
+
 module Gtp = struct
   type +'a _9 = [ `_9 of 'a ]
   type +'a _8 = [ `_8 of 'a | 'a _9 ]
