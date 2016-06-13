@@ -38,7 +38,7 @@ let set: 'a t -> 'a Nat.lt -> float -> unit = fun vec nat x ->
   A.unsafe_set vec (Nat.to_int nat) x
 
 let dim = Array.length
-let typed_dim (v: 'a t) : 'a Nat.eq = Nat.create @@ dim v
+let typed_dim (v: 'a t) : 'a Nat.eq = Nat.Unsafe.create @@ dim v
 
 let map f v = Array.map f v
 

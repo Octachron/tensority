@@ -42,7 +42,7 @@ let dims mat = let l = Nat.to_int mat.lines in
 
 let typed_dims (mat:('a * 'b) t) : 'a Nat.eq * 'b Nat.eq =
   let l, r = dims mat in
-  Nat.create l, Nat.create r
+  Nat.Unsafe.create l, Nat.Unsafe.create r
 
 let size mat = Array.length mat.array
 
@@ -80,7 +80,7 @@ let id dim = square dim init delta
 let transpose (mat:('a *' b) t) : ('b * 'a ) t =
   let array = Array.create_float (size mat) in
   let l, r = dims mat in
-  let lines = Nat.create @@ r in
+  let lines = Nat.Unsafe.create @@ r in
   let dir = ref 0 and tr = ref 0 in
   for j = 0 to r - 1 do
     tr := j;

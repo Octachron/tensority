@@ -67,7 +67,7 @@ module Shifter(K:sig type m end) = struct
   type +'a t = ('a, K.m) Nat.t
   type (+'d,+'x) s = ('d,'x) all
 
-  let shift k (d,x) = d * 10, create (k*d + Nat.to_int x)
+  let shift k (d,x) = d * 10, Unsafe.create (k*d + Nat.to_int x)
 
   type ('args,'fx,'aux,'lead) f_gen =
     int * ('x * 'd * 'l ) t  -> int * ('fx * ('d, 'any) s * 'lead ) t
@@ -100,16 +100,16 @@ module Shifter(K:sig type m end) = struct
   let _0 : ('a * 'd, [< `_0 of 'a | 'd Gtp._1 ], _ ) f0 = fun x -> shift 0 x
 
   let nat: int * ((_,'x) filter_zero * 'd * nz) t ->  'x t =
-    fun (_m,n) -> magic n
+    fun (_m,n) -> Unsafe.magic n
   let nat_z : int * ('x * 'd * nz) t ->  'x t =
-    fun (_,n) -> magic n
+    fun (_,n) -> Unsafe.magic n
 
   let (@) f x = f x
 end
 
 module Indices = struct
   module K = struct type m = ltm end
-  let make n = 10, create n
+  let make n = 10, Unsafe.create n
   type (+'a,+'any) b = int * ('a * 'any at_least_1 * nz) lt
 
   let _9n : ( _ at_least_1,'a) b = make 9
@@ -130,7 +130,7 @@ module Adder = struct
 
   module K = struct type m = lem end
 
-  let make n = 10, create n
+  let make n = 10, Unsafe.create n
   type (+'a,+'any) b = int * ('a * 'any at_least_1 * nz) le
 
   let _9n : ([< _ end_ Gtp._9 | _ all Lep._8 ],_) b = make 9
@@ -150,7 +150,7 @@ module Adder = struct
 end
 
 module Size = struct
-  let make n = 10, create n
+  let make n = 10, Unsafe.create n
   type 'a s = int * ('a * nz) eq
   let _9n : [ `_9 of [`T] ] s = make 9
   let _8n : [ `_8 of [`T] ] s = make 8
@@ -164,7 +164,7 @@ module Size = struct
   let _0n : [ `_0 of [`T] ] s = make 0
 
 
-  let shift k (d,x) = 10 * d, create (k*d + Nat.to_int x)
+  let shift k (d,x) = 10 * d, Unsafe.create (k*d + Nat.to_int x)
 
   type ('x,'fx,'any) d =
     int * ('x * 'l) eq -> int * ('fx * nz) eq
@@ -189,7 +189,7 @@ module Size = struct
   let nat: int * ('digits * nz) eq
     -> 'digits eq
     =
-    fun (_m,n) -> magic n
+    fun (_m,n) -> Unsafe.magic n
 
   let (@) f x  = f x
 end

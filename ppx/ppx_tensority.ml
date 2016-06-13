@@ -100,7 +100,7 @@ module Expr = struct
   let nat loc kind typ value =
     [%expr let open Nat in
            let nat: ([%t typ],[%t kind]) Nat.t =
-                             create [%e value] in nat ][@metaloc loc]
+                             Unsafe.create [%e value] in nat ][@metaloc loc]
 
   let shape loc kind typ value =
     [%expr let nat = [%e nat loc kind typ value] in
