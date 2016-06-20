@@ -30,7 +30,6 @@ let path_prefix_doc namespace s =
   let name = namespace.name ^"__"^ s in
   namespace.path / name
 
-
 let module_prefix namespace s =
   namespace.name ^"__"^ s
 
@@ -40,14 +39,6 @@ let alias_file ?(impl=false) {name;path} =
 
 let mllib {name;_} = "lib_" ^ name ^ ".mllib"
 let odocl {name;_} =  name ^ ".odocl"
-
-
-let find_namespaces () =
-  let files = Array.to_list @@ Sys.readdir "." in
-  let is_namespace name = Filename.check_suffix name ".namespace" in
-  let namespace name = Filename.chop_extension name in
-  files |> List.filter is_namespace |> List.map namespace
-
 
 let tag_namespace ({name;path} as n) =
   let files = Array.to_list @@ Sys.readdir path in
