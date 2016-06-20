@@ -17,7 +17,7 @@ type _ elt =
   | Elt: ('nat,'kind) Nat.t ->
     ('kind, 'nat, 'l, 'out ) abs elt
   | P_elt: int * 'nat Nat.eq ->
-    (Nat.eqm, 'nat, 'l, 'out ) abs elt
+    ([`Eq], 'nat, 'l, 'out ) abs elt
   | All :
       <
         k_in: 'k;
@@ -42,19 +42,19 @@ type _ t =
     < in_:'n succ * 'fl; out:'f_out; kind: 'k * 'ko > t
 
 type ('a, 'k) gen_l =
-    < kind : 'k * Nat.eqm; in_ : 'a; out : empty > t
-type 'a eq = ('a, Nat.eqm) gen_l
-type 'a lt = ('a, Nat.ltm) gen_l
+    < kind : 'k * [`Eq] ; in_ : 'a; out : empty > t
+type 'a eq = ('a, [`Eq] ) gen_l
+type 'a lt = ('a, [`Lt] ) gen_l
 type 'a l = 'a eq
 
 
 type ('a, 'b, 'k ) gen_s =
     < kind : 'k ; in_ : 'a; out : 'b > t
 
-type ('a, 'b) eq_s = ('a,'b, Nat.eqm * Nat.eqm ) gen_s
-type ('a, 'b) lt_s = ('a,'b, Nat.ltm * Nat.ltm ) gen_s
-type ('a, 'b) s_to_lt = ('a,'b, Nat.eqm * Nat.ltm ) gen_s
-type ('a, 'b) s_to_eq = ('a,'b, Nat.ltm * Nat.eqm ) gen_s
+type ('a, 'b) eq_s = ('a,'b, [`Eq] * [`Eq] ) gen_s
+type ('a, 'b) lt_s = ('a,'b, [`Lt] * [`Lt] ) gen_s
+type ('a, 'b) s_to_lt = ('a,'b, [`Eq] * [`Lt] ) gen_s
+type ('a, 'b) s_to_eq = ('a,'b, [`Lt] * [`Eq] ) gen_s
 type ('a, 'b) s = ('a, 'b) s_to_eq
 
 type 'a single = z succ * ('a * nil)
@@ -67,7 +67,7 @@ val logical_size : 'sh eq -> int
 val is_sparse : 'sh eq -> bool
 val detach : 'sh eq -> 'sh eq
 
-val elt : int -> 'a Nat.eq -> (Nat.eqm, 'a, _ , _ ) abs elt
+val elt : int -> 'a Nat.eq -> ([`Eq], 'a, _ , _ ) abs elt
 
 val split_1:
   ('n succ * ('a * 'b) , 'k) gen_l

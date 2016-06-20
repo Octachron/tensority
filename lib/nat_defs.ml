@@ -108,7 +108,7 @@ module Shifter(K:sig type m end) = struct
 end
 
 module Indices = struct
-  module K = struct type m = ltm end
+  module K = struct type m = [`Lt] end
   let make n = 10, Unsafe.create n
   type (+'a,+'any) b = int * ('a * 'any at_least_1 * nz) lt
 
@@ -128,7 +128,7 @@ end
 
 module Adder = struct
 
-  module K = struct type m = lem end
+  module K = struct type m = [ `Eq | `Lt ] end
 
   let make n = 10, Unsafe.create n
   type (+'a,+'any) b = int * ('a * 'any at_least_1 * nz) le

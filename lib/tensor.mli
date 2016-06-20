@@ -46,11 +46,10 @@ val reshape :
   'c Shape.eq * 'd Shape.eq -> < contr : 'c; cov : 'd > t
 
 val matrix :
-  ('a, Nat.eqm) Nat.t ->
-  ('b, Nat.eqm) Nat.t -> ('a Nat.lt -> 'b Nat.lt -> float) -> ('a, 'b) matrix
+  'a Nat.eq -> 'b Nat.eq -> ('a Nat.lt -> 'b Nat.lt -> float) -> ('a, 'b) matrix
 
 val sq_matrix :
-  ('a, Nat.eqm) Nat.t -> ('a Nat.lt -> 'a Nat.lt -> float) -> ('a, 'a) matrix
+  'a Nat.eq -> ('a Nat.lt -> 'a Nat.lt -> float) -> ('a, 'a) matrix
 
 val vector : 'a Nat.eq -> ('a Nat.lt -> float) -> 'a vec
 val vec_dim : 'dim vec -> 'dim Nat.eq
@@ -75,8 +74,8 @@ val get : 'a vec -> 'a Nat.lt -> float
   [@@indexop]
 
 val delta : ('a, 'b) Nat.t -> ('c, 'd) Nat.t -> float
-val id : ('a, Nat.eqm) Nat.t -> ('a, 'a) matrix
-val base : ('a, Nat.eqm) Nat.t -> ('a, [ `Lt ]) Nat.t -> 'a vec
+val id : 'a Nat.eq -> ('a, 'a) matrix
+val base : 'a Nat.eq -> 'a Nat.lt -> 'a vec
 val endo_dim : ('a, 'a) matrix -> 'a Nat.eq
 
 val transpose : < contr : 'a; cov : 'b > t -> < contr : 'b; cov : 'a > t

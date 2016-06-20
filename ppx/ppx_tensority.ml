@@ -92,9 +92,9 @@ module Ints = struct
 let to_label n = "_" ^ string_of_int n
 
 let t = Polyvar.tag ~empty_type:true "T"
-let eq = [%type: eqm]
-let lt = [%type: ltm]
-let le = [%type: _ lem ]
+let eq = [%type: [`Eq] ]
+let lt = [%type: [`Lt] ]
+let le = [%type: [`Lt|`Eq] ]
 
 module Expr = struct
   let nat loc kind typ value =

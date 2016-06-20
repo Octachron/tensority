@@ -47,9 +47,6 @@ type (+'a,+'b) nat = ('a,'b) t
 
 (** {3 Helper types} *)
 
-type lem = [ `Eq | `Lt ]
-type eqm = [ `Eq ]
-type ltm = [ `Lt ]
 type empty = private Empty_set
 type z = private Z
 type nz = private NZ
@@ -57,15 +54,15 @@ type +'a succ = private Succ
 
 (** {2 Specialized types} *)
 
-type 'a lt = ('a, ltm) t
+type 'a lt = ('a, [`Lt]) t
 (** A natural [k : [%nat n] lt] is a couple of value [k] and integer interval
     type [[%nat n]] such that [ k <  min n ] *)
 
-type 'a eq = ('a, eqm) t
+type 'a eq = ('a, [`Eq]) t
 (** A natural [k : [%nat n] eq] is a couple of value [k] and type [[%nat n]] such
     that [ k = n ] *)
 
-type 'a le = ('a, lem) t
+type 'a le = ('a, [`Lt|`Eq]) t
 (** A natural [k : [%nat n] lt] is a couple of value [k] and integer interval
     type [[%nat n]] such that [ k <  min n ] *)
 
@@ -100,7 +97,7 @@ val iter : ('a lt -> unit) -> 'a eq -> unit
 (** [iter_on nat f] is [iter f nat] *)
 val iter_on : 'a eq -> ('a lt -> unit) -> unit
 
-(** partial_iter ~start ~stop f] computes
+(** [partial_iter ~start ~stop f] computes
     [f (start: '(< nat)); ...; f (stop: '(< nat) )] *)
 val partial_iter : start:int -> stop:'a eq -> ('a lt -> unit) -> unit
 
