@@ -18,12 +18,12 @@ type ('d1,'d2,'d3) t3 = <contr:('d1,'d2) Shape.pair; cov: 'd3 Shape.single> t
 
 let full = Stride.neutral
 module Unsafe = struct
-let create ?(stride=full) ~contr ~cov array =
+let create ~contr ~cov array =
   let len = (Shape.physical_size cov) * (Shape.physical_size contr) in
   let len' = A.length array in
   if len <> len' then
     raise @@ Signatures.Dimension_error( "Tensor.unsafe_create", len, len' )
-  ; {cov;contr; array=A.make len 0.; stride  }
+  ; {cov;contr; array; stride = full  }
 
 end
 

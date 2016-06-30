@@ -8,9 +8,8 @@ type ('d1, 'd2, 'd3) t3 =
 
 module Unsafe : sig
 val create :
-  ?stride:Stride.t ->
   contr:'a Shape.eq ->
-  cov:'b Shape.eq -> 'c array -> < contr : 'a; cov : 'b > t
+  cov:'b Shape.eq -> float array -> < contr : 'a; cov : 'b > t
 end
 
 val get: < contr : 'a; cov : 'b > t -> 'a Shape.lt * 'b Shape.lt -> float

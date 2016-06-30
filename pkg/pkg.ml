@@ -31,7 +31,7 @@ let pkg nm =
   let lib modules =
     (Pkg.lib ~exts:Exts.library ("lib_" ^ nm.name ))
     :: (Pkg.lib ~exts:Exts.api Fpath.( nm.src // nm.name ))
-    :: (Pkg.libexec ~exts:Exts.exe ("ppx/ppx_" ^ nm.name) )
+    :: (Pkg.bin ~exts:Exts.exe ("ppx/ppx_" ^ nm.name) )
     :: modules in
   modules >>| lib
 
