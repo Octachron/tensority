@@ -31,7 +31,7 @@
    Unsafe functions can be used to directly create a natural with [Unsafe.create]
    or convert a natural from one type to the other [Unsafe.magic]. If the
    previous invariant are not respected, the behavior of any function using
-   these broken natural is unspecified.
+   these broken naturals is unspecified.
 
    If possible, it is therefore recommanded to create type and value checked
    dynamical value using the [Dynamic] functor.
@@ -40,8 +40,8 @@
 
 (** {2 Natural numbers with type-level reflection} *)
 
-type (+'a, +'b) t = private int
-type (+'a,+'b) nat = ('a,'b) t
+type (+'a, -'b) t = private int
+type (+'a,-'b) nat = ('a,'b) t
 (** Underneath, a [nat] or [Nat.t] is just an integer *)
 
 
@@ -62,7 +62,7 @@ type 'a eq = ('a, [`Eq]) t
 (** A natural [k : [%nat n] eq] is a couple of value [k] and type [[%nat n]] such
     that [ k = n ] *)
 
-type 'a le = ('a, [`Lt|`Eq]) t
+type 'a le = ('a, [`Eq|`Lt]) t
 (** A natural [k : [%nat n] lt] is a couple of value [k] and integer interval
     type [[%nat n]] such that [ k <  min n ] *)
 
@@ -97,6 +97,10 @@ val iter : ('a lt -> unit) -> 'a eq -> unit
 (** [iter_on nat f] is [iter f nat] *)
 val iter_on : 'a eq -> ('a lt -> unit) -> unit
 
+(** [map f nat] computes [| f (0: '(< nat)); ...; f (nat - 1: '(< nat) )|] *)
+val map : ('a lt -> 'b) -> 'a eq -> 'b array
+
+
 (** [partial_iter ~start ~stop f] computes
     [f (start: '(< nat)); ...; f (stop: '(< nat) )] *)
 val partial_iter : start:int -> stop:'a eq -> ('a lt -> unit) -> unit
@@ -112,20 +116,48 @@ val partial_fold :
 
 (** {2 Extended proofs } *)
 type truth = Truth
-val ( %<% ) : 'a lt -> 'a eq -> truth
-val ( %<? ) : 'a eq -> 'b eq -> 'b lt option
 
-val if_ : 'a option -> ('a -> 'b) -> (unit -> 'b) -> 'b
+(** Type constraints *)
+
+val ( %<% ) : 'a lt -> 'a eq -> truth
 val ( %? ) : 'a lt -> 'a eq -> 'a lt
 
+(** Proofs for arithmetic proposition of the form a + b = c *)
+module Sum : sig
+  (** Exception for wrong arithmetic exception *)
+  exception Erroneous_arithmetic of
+      {fn:string; summand:int list; erroneous_sum:int }
 
+  (** type for summand *)
+  type 'a summand
+  (** type for proof witness: the successful construction of a value
+      of type [ ([s_1,..s_n],r) t ] implies that ∑ s_i = r *)
+  type ('a, 'c) t
+
+  (** Safe construction function *)
+  val create : 'a summand -> 'c eq -> ('a, 'c) t option
+
+  (** Operator version *)
+  val ( =? ) : 'a summand -> 'b eq -> ('a, 'b) t option
+
+  (** Exception-raising construction function *)
+  val create_exn : 'a summand -> 'c eq -> ('a, 'c) t
+
+  (** Operator version *)
+  val ( =! ) : 'a summand -> 'b eq -> ('a, 'b) t
+
+  (** Pair summation *)
+  val ( + ) : 'a eq -> 'b eq -> ('a * 'b) summand
+
+  (** Let be k , l and n such that [k + l = n], then [k' < k] and
+      [l'≤l] ⇒ [k' + l' < n].
+      With a proof that [k + l = n], therefore we can safely add
+      [k:k lt] and [l: l le] to obtain a natural number [n : n lt].
+*)
+  val adder : ('a * 'b ,'c) t -> 'a lt -> 'b le -> 'c lt
+end
+
+val ( %<? ) : 'a eq -> 'b eq -> 'b lt option
 val if_inferior : int -> 'a eq -> ('a lt -> 'b) -> 'b -> 'b
-val ordinal_map : ('a lt -> 'b) -> 'a eq -> 'b array
 
-exception Type_level_integer_error
-
-val certified_adder :
-  'inf eq ->
-  'diff eq ->
-  'sup eq ->
-  ('inf lt -> 'diff le -> 'sup lt)
+val if_ : 'a option -> ('a -> 'b) -> (unit -> 'b) -> 'b

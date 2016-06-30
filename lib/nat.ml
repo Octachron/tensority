@@ -1,9 +1,9 @@
 (* Core types *)
-type (+'a,+'b) t = int
-type (+'a,+'b) nat = ('a,'b) t
+type (+'a,-'b) t = int
+type (+'a,-'b) nat = ('a,'b) t
 
 (* Helper types *)
-type lem = [ `Lt | `Eq ]
+type lem = [ `Eq | `Lt ]
 type eqm = [ `Eq ]
 type ltm = [ `Lt ]
 
@@ -59,6 +59,12 @@ let typed_partial_iter  ~(start: 'a lt) ~(stop: 'a eq) (f:'a lt -> unit): unit =
     f @@ Unsafe.create i
   done
 
+(* Map function *)
+let map (f:'a lt -> 'b ) (dim:'a eq) =
+  let n = to_int dim in
+  Array.init n (fun i -> f @@ Unsafe.create i)
+
+
 (* Fold functions *)
 let fold f acc n =
   let acc = ref acc in
@@ -80,6 +86,38 @@ let partial_fold
 type truth = Truth
 let (%<%): 'a lt -> 'a eq -> truth = fun _ _ -> Truth
 
+module Sum = struct
+  exception Erroneous_arithmetic of
+      {fn:string; summand:int list; erroneous_sum:int }
+
+  type 'a summand = int list
+  type ('a, 'c) t = Witness of {summand:'a summand; result: 'c eq}
+
+  let create: 'a summand -> 'c eq -> ('a,'c) t option =
+    fun s result ->
+      let sum = List.fold_left (fun s x -> s + (x:>int) ) 0 s in
+      if sum = (result:>int) then
+        Some (Witness {summand=s; result })
+      else None
+
+  let create_exn: 'a summand -> 'c eq -> ('a,'c) t =
+    fun s result ->
+      let sum = List.fold_left (fun s x -> s + (x:>int) ) 0 s in
+      if sum = (result:>int) then
+        Witness {summand=s; result }
+      else
+        raise @@ Erroneous_arithmetic
+          { fn="create_exn"; summand=s; erroneous_sum = result }
+
+  let adder: ('a * 'b, 'c) t -> 'a lt  -> 'b le -> 'c lt =
+    fun _p x y -> Unsafe.magic @@ (x:>int) + (y:>int)
+
+
+  let ( + ) (x:'a eq) (y:'b eq) : ('a * 'b) summand = [x; y]
+  let ( =? ) = create
+  let ( =! ) = create_exn
+end
+
 let (%<?): 'a eq -> 'b eq -> 'b lt option =
   fun k l -> if to_int k < to_int l then Some(Unsafe.magic k) else None
 
@@ -98,12 +136,6 @@ let if_inferior (n:int) (nat: 'a eq) (f:'a lt -> 'b) (default:'b) =
     f @@ Unsafe.create n
   else
     default
-
-let ordinal_map (f:'a lt -> 'b ) (dim:'a eq) =
-  let n = to_int dim in
-  Array.init n (fun i ->
-      f @@ Unsafe.create i
-    )
 
 exception Type_level_integer_error
 let certified_adder: 'inf eq -> 'diff eq -> 'sup eq ->

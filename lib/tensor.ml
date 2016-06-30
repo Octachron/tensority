@@ -128,7 +128,7 @@ let sq_matrix dim f = matrix dim dim f
 let vector (dim:'a Nat.eq) f :' a vec=
   let open Shape in
   { cov=[]; contr=[Elt dim]; stride = full;
-    array= Nat.ordinal_map f dim }
+    array= Nat.map f dim }
 
 let vec_dim (vec: 'dim vec) =
   let open Shape in
@@ -500,13 +500,17 @@ let normal (array: 'dim vec array): 'dim vec =
   let dim = vec_dim @@ array @? 0 in
   let module Dyn = Nat.Dynamic(struct let dim = nvec end) in
   let open Nat_defs in
-  let ( %+% ) = Nat.certified_adder Dyn.dim _1 dim in
-  let minor k = det @@ sq_matrix Dyn.dim (fun i j ->
-      let offset =
-        if Nat.( to_int i < to_int k) then _0p else _1p in
-      (array @? Nat.to_int j).{i %+% offset}
-    )
-  in
-  vector dim minor
+  match Nat.Sum.( Dyn.dim + _1 =? dim ) with
+  | None -> raise @@
+    Signatures.Dimension_error( "Tensor.normal", nvec + 1 , Nat.to_int dim )
+  | Some proof ->
+    let (%+%) = Nat.Sum.adder proof in
+    let minor k = det @@ sq_matrix Dyn.dim (fun i j ->
+        let offset =
+          if Nat.( to_int i < to_int k) then _0p else _1p in
+        (array @? Nat.to_int j).{i %+% offset}
+      )
+    in
+    vector dim minor
 
 include Operators
