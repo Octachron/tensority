@@ -23,7 +23,7 @@
    * k-suffixed literals (e.g. [2k] ) are translated to [( 'n , [`Eq] ) nat]
    with the right type representation (e.g. [ `_2 of [`T] ] )
    * j-suffixed literals (e.g. [1j] ) are translated to [('n, [`Lt]) nat ]
-   * j-suffixed literals (e.g. [1j] ) are translated to [('n, [`Lt | `Eq ]) nat ]
+   * p-suffixed literals (e.g. [1p] ) are translated to [('n, [`Lt | `Eq ]) nat ]
 
    Note that tensority ppx extension provides two other literals types that are
    detailed in the {!Shape} modules.
@@ -88,7 +88,7 @@ module Dynamic :
     sig type t = private T val dim : t eq end
 
 
-(** {2 Iter and fold functions} *)
+(** {2 Iter, map, fold functions} *)
 (** {3 Iter functions }*)
 
 (** [iter f nat] computes [f (0: '(< nat)); ...; f (nat - 1: '(< nat) )] *)

@@ -162,8 +162,8 @@ let fold_all_left f acc m =
 
 (** Unsafe *)
 let reshape_inplace:
-  <shape:'sh; elt:'elt> t -> 'sh2 Shape.l -> <shape:'sh2; elt:'elt> t =
-  fun m sh2 ->
+  'sh2 Shape.l -> <shape:'sh; elt:'elt> t -> <shape:'sh2; elt:'elt> t =
+  fun sh2 m ->
   let s = size m and s2 = Shape.logical_size sh2 in
   if size m <> Shape.logical_size sh2 then
     raise @@ Dimension_error ("Multidim_array.reshape", s, s2)
@@ -266,6 +266,16 @@ let fold_top_left f acc m =
 
 let partial_copy ?(deep_copy=fun x -> x) s m =
   Sparse.copy ~deep_copy @@ slice s m
+
+let reshape_inplace dims t =
+  if is_sparse t then
+    None
+  else
+    Some (Dense.reshape_inplace dims t)
+
+let reshape dims t =
+    Dense.reshape_inplace dims @@ copy t
+
 
 let partial_blit = Sparse.partial_blit
 

@@ -110,6 +110,26 @@ val partial_blit :
   from:< elt : 'a; shape : 'b > t ->
   to_:< elt : 'a; shape : 'c > t -> ('c, 'b) Shape.s -> unit
 
+
+(** Reshape function *)
+
+(** [reshape sh m] copy and reshape the function if the shape [sh]
+    is compatible with the shape [m.shape].
+    Raise a [Dimension_error] otherwise.
+    @todo Multiplication proof.
+*)
+val reshape: 'a Shape.l -> < elt : 'b; shape : 'b > t -> < elt : 'b; shape : 'a > t
+
+(** [reshape_inplace sh m] reinterpret the dense multidimensional array
+    [m] as an array of shape [sh]. The function returns [None] if the
+    [m] is not dense
+    Raise a [Dimension_error] otherwise.
+    @todo Multiplication proof.
+*)
+val reshape_inplace: 'a Shape.l -> < elt : 'b; shape : 'b > t
+  -> < elt : 'b; shape : 'a > t option
+
+
 (** {2 Map, iter and fold functions} *)
 (** {3 Map functions} *)
 
@@ -118,11 +138,19 @@ val partial_blit :
 val map :
   ('a -> 'b) -> < elt : 'a; shape : 'c > t -> < elt : 'b; shape : 'c > t
 
-(** [map f m] applies [f index] to every elements of [m], where [index] is
+(** [map_sh f m] applies [f index] to every elements of [m], where [index] is
     multi-index of the element. The shape of the array is preserved *)
 val map_sh :
   ('sh Shape.lt -> 'a -> 'b) -> < elt : 'a; shape : 'sh > t ->
   < elt : 'b; shape : 'sh > t
+
+(** [map_first f m] computes the multidimensional array
+    [ [| f s_1; ...; f s_n|] ] where [s_k] is the k-th first-index slice
+    of m
+*)
+val map_first: (< elt : 'a; shape : 'rank * 'l > t -> 'd) ->
+< elt : 'a; shape : 'rank Nat.succ * ( 'n *  'l ) > t ->
+< elt : 'd; shape : Nat.z Nat.succ * ('n * Shape.nil) > t
 
 (** [map f m_1 m_2] computes [f e_1 e_2] for every pair of elements of the
     arrays [m_1] and [m_2] and returns the result as an array of the same shape

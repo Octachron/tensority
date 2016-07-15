@@ -125,24 +125,10 @@ let if_ opt f g = match opt with
   | Some x -> f x
   | None -> g ()
 
-let (%?):  ('a,[`Lt]) t -> ('a,[`Eq]) t -> ('a,[`Lt]) t = fun x _y -> x
-let (|>?) x f = match x with Some x -> Some(f x) | None -> None
-let (||?) opt x = match opt with Some x -> x | None -> x
-
-
+let (%?):  'a lt -> 'a eq -> 'a lt = fun x _y -> x
 
 let if_inferior (n:int) (nat: 'a eq) (f:'a lt -> 'b) (default:'b) =
   if n < to_int nat then
     f @@ Unsafe.create n
   else
     default
-
-exception Type_level_integer_error
-let certified_adder: 'inf eq -> 'diff eq -> 'sup eq ->
-  ( 'inf lt -> 'diff le -> 'sup lt )
-  =
-  fun inf diff sup->
-    if to_int inf + to_int diff <> to_int sup then
-      raise Type_level_integer_error
-    else
-      fun base diff -> Unsafe.create @@ to_int base + to_int diff
