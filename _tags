@@ -1,5 +1,6 @@
 "lib": include
 
+<lib/stencil.ml{,i}>: package(ppx_indexop)
 <lib/tensor.ml{,i}>: package(ppx_indexop)
 <lib/small_*.ml{,i}>: package(ppx_indexop)
 <lib/multidim_array.ml{,i}>: package(ppx_indexop)

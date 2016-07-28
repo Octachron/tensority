@@ -7,7 +7,7 @@ let (=:) = (@@)
 
 type 'x t =  { contr:'a Shape.eq
              ; cov:'b Shape.eq
-             ; stride:Stride.t
+             ; stencil:Stencil.t
              ; array : float array
              }
   constraint 'x = < contr:'a; cov:'b >
@@ -16,14 +16,14 @@ type 'dim vec = <contr:'dim Shape.single; cov:Shape.empty> t
 type ('l,'c) matrix = <contr:'l Shape.single; cov: 'c Shape.single> t
 type ('d1,'d2,'d3) t3 = <contr:('d1,'d2) Shape.pair; cov: 'd3 Shape.single> t
 
-let full = Stride.neutral
+let full = Stencil.all
 module Unsafe = struct
 let create ~contr ~cov array =
   let len = (Shape.physical_size cov) * (Shape.physical_size contr) in
   let len' = A.length array in
   if len <> len' then
     raise @@ Signatures.Dimension_error( "Tensor.unsafe_create", len, len' )
-  ; {cov;contr; array; stride = full  }
+  ; {cov;contr; array; stencil = full  }
 
 end
 
@@ -31,16 +31,16 @@ end
   let get: <contr:'a; cov:'b> t -> ('a Shape.lt * 'b Shape.lt ) -> float = fun t
     (contr,cov) ->
     let p = let open Shape in
-      let c = full_position ~stride:t.stride ~shape:t.contr ~indices:contr in
-      position ~stride:c ~shape:t.cov ~indices:cov in
+      let c = full_position ~stencil:t.stencil ~shape:t.contr ~indices:contr in
+      position ~stencil:c ~shape:t.cov ~indices:cov in
     t.array @? p
 
 
   let set: < contr:'a; cov:'b > t -> ('a Shape.lt * 'b Shape.lt ) -> float -> unit
     = fun t (contr,cov) value ->
     let p = let open Shape in
-      let c = full_position ~stride:t.stride ~shape:t.contr ~indices:contr in
-      position ~stride:c ~shape:t.cov ~indices:cov in
+      let c = full_position ~stencil:t.stencil ~shape:t.contr ~indices:contr in
+      position ~stencil:c ~shape:t.cov ~indices:cov in
     t.array % p =: value
 ]
 
@@ -51,14 +51,14 @@ let len t = A.length t.array
 let contr_dims t = t.contr
 let cov_dims t = t.cov
 let is_sparse t = Shape.(
-    not(Stride.is_neutral t.stride) || is_sparse t.contr || is_sparse t.cov
+    not(Stencil.is_all t.stencil) || is_sparse t.contr || is_sparse t.cov
   )
 
 
 let const ~contr ~cov x=
   let cov = Shape.detach cov and contr = Shape.detach contr in
   let len = (Shape.physical_size cov) * (Shape.physical_size contr) in
-  {cov;contr; array=A.make len x; stride = full }
+  {cov;contr; array=A.make len x; stencil = full }
 
 
 let zero ~contr ~cov = const ~contr ~cov  0.
@@ -119,7 +119,7 @@ let matrix dim_row dim_col f: ('a,'b) matrix =
       ) in
   { contr=[Elt dim_row]
   ; cov=[Elt dim_col]
-  ; stride = full
+  ; stencil = full
   ; array
   }
 
@@ -127,7 +127,7 @@ let sq_matrix dim f = matrix dim dim f
 
 let vector (dim:'a Nat.eq) f :' a vec=
   let open Shape in
-  { cov=[]; contr=[Elt dim]; stride = full;
+  { cov=[]; contr=[Elt dim]; stencil = full;
     array= Nat.map f dim }
 
 let vec_dim (vec: 'dim vec) =
@@ -141,19 +141,18 @@ module Index = struct
 
   open Shape
 
-  let pos_2 stride (v: _ single l) (_w: _ single l) r c=
+  let pos_2 stencil (v: _ single l) (_w: _ single l) r c=
     let core dim_v =
-      let open Stride in
-      stride.offset + stride.size * Nat.( to_int r + dim_v * to_int c) in
+      let open Stencil in
+      stencil.[Nat.( to_int r + dim_v * to_int c)] in
     match v with
     | [Elt nat] -> core @@ Nat.to_int nat
     | [P_elt (dim,_) ] -> core dim
 
-  let pos_3 (type a b) stride (v:(a,b) pair l) (_w: _ single l) r c h=
+  let pos_3 (type a b) stencil (v:(a,b) pair l) (_w: _ single l) r c h=
     let core dim_r dim_c =
-      let open Stride in
-      stride.offset + stride.size * Nat.( to_int r + dim_r *
-      (to_int c + dim_c * to_int h) ) in
+      let open Stencil in
+      stencil.[Nat.( to_int r + dim_r * (to_int c + dim_c * to_int h))] in
     match v with
     | [Elt n1; Elt n2 ] -> core (Nat.to_int n1) (Nat.to_int n2)
     | [P_elt (n1,_); P_elt (n2,_) ] -> core n1 n2
@@ -164,28 +163,28 @@ end
 
 ;; [%%indexop
 let get_1: 'a vec -> 'a Nat.lt -> float =
-  fun t n -> t.array @? Stride.(t.stride.offset + t.stride.size * Nat.to_int n)
+  fun t n -> t.array @? Stencil.(t.stencil.[Nat.to_int n])
 
 let set_1: 'a vec -> 'a Nat.lt -> float -> unit =
   fun t n -> t.array % Nat.to_int n
 
 let get_2: ('a,'b) matrix -> 'a Nat.lt -> 'b Nat.lt -> float =
   fun t r c ->
-    t.array @? Index.pos_2 t.stride t.contr t.cov r c
+    t.array @? Index.pos_2 t.stencil t.contr t.cov r c
 
 let set_2: ('a,'b) matrix -> 'a Nat.lt -> 'b Nat.lt -> float -> unit =
   fun t r c  ->
-    t.array % Index.pos_2 t.stride t.contr t.cov r c
+    t.array % Index.pos_2 t.stencil t.contr t.cov r c
 
 let get_3: ('a,'b,'c) t3 -> 'a Nat.lt -> 'b Nat.lt -> 'c Nat.lt -> float = fun t x y z ->
-    t.array @? Index.pos_3 t.stride t.contr t.cov x y z
+    t.array @? Index.pos_3 t.stencil t.contr t.cov x y z
 
 let set_3:
   ('a,'b,'c) t3
   -> 'a Nat.lt -> 'b Nat.lt -> 'c Nat.lt
   -> float
   -> unit = fun t x y z ->
-    t.array % Index.pos_3 t.stride t.contr t.cov x y z
+    t.array % Index.pos_3 t.stencil t.contr t.cov x y z
 ]
 
 ;;
@@ -281,7 +280,7 @@ let transpose: < contr:'left; cov:'right > t -> < contr:'right; cov:'left > t =
     iter_on (left ^ right ^ stop) (fun i j ->
         t1.array % (i * right + j ) =: t1.array @? (j * right + i)
       ) in
-  { array; contr = t1.cov; cov = t1.contr; stride = full }
+  { array; contr = t1.cov; cov = t1.contr; stencil = full }
 
 let mult (t1: <contr:'left; cov:'mid> t) (t2: <contr:'mid; cov:'right> t) :
   <contr:'left; cov:'right> t =
@@ -298,7 +297,7 @@ let mult (t1: <contr:'left; cov:'mid> t) (t2: <contr:'mid; cov:'right> t) :
         (array @? pos) +.
         (l @? i * middle_dim + k ) *. (r @? k * right_dim + j)
     );
-  {array; contr = t1.contr; cov = t2.cov; stride = full }
+  {array; contr = t1.contr; cov = t2.cov; stencil = full }
 
 
 
@@ -425,9 +424,9 @@ let partial_copy t (f1,f2) =
     )  t.cov f2
 
 let slice t (f1,f2) =
-  let final_stride, cov = Shape.filter ~stride:full t.cov f2 in
-  let stride, contr = Shape.filter ~stride:t.stride ~final_stride t.contr f1 in
-  { t with contr; cov; stride }
+  let final_stencil, cov = Shape.filter ~stencil:full t.cov f2 in
+  let stencil, contr = Shape.filter ~stencil:t.stencil ~final_stencil t.contr f1 in
+  { t with contr; cov; stencil }
 
 let blit t t2 =
   Shape.iter ( fun sh' ->

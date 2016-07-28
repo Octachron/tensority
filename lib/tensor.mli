@@ -25,8 +25,6 @@ val contr_dims : < contr : 'a; cov : 'b > t -> 'a Shape.eq
 val cov_dims : < contr : 'a; cov : 'b > t -> 'b Shape.eq
 val is_sparse : < contr : 'a; cov : 'b > t -> bool
 
-val full : Stride.t
-
 
 val const :
   contr:'a Shape.eq -> cov:'b Shape.eq -> float -> < contr : 'a; cov : 'b > t

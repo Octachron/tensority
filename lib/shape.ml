@@ -108,49 +108,48 @@ let split_1_nat: type n a b. (n succ * (a * b)) eq
   | P_elt (_,nat) :: q -> nat , q
 
 
-let slice_1: type n a q. Stride.t -> a Nat.lt ->
-  (n succ * ( a * q)) eq -> Stride.t *( n * q ) eq =
-  fun stride nat shape -> match shape with
+let slice_1: type n a q. Stencil.t -> a Nat.lt ->
+  (n succ * ( a * q)) eq -> Stencil.t *( n * q ) eq =
+  fun stencil nat shape -> match shape with
     | Elt s :: q ->
-      Stride.( stride $ { size = Nat.to_int s; offset = Nat.to_int nat } ),
+      Stencil.( stencil % { linear = Nat.to_int s; translation = Nat.to_int nat } ),
       q
     | P_elt (s,_) :: q ->
-      Stride.( stride $ { size = s; offset = Nat.to_int nat } ),
+      Stencil.( stencil % { linear = s; translation = Nat.to_int nat } ),
       q
 
-let filter ?(final_stride=Stride.neutral) ~stride shape slice =
-  let rec filter: type sh sh2. Stride.t -> sh eq -> (sh, sh2) s
-    -> Stride.t * sh2 eq =
-    let offset = Stride.offset in
-    (* possible optimisation merge with scan_filter above *)
-    fun stride sh sl -> match sh,sl with
-      | [], [] -> Stride.( stride $ final_stride), []
+(* The function breaks stencil abstraction, check why *)
+let filter ?(final_stencil=Stencil.all) ~stencil shape slice =
+  let rec filter: type sh sh2. Stencil.t -> sh eq -> (sh, sh2) s
+    -> Stencil.t * sh2 eq =
+    let transl = Stencil.translation in
+    fun stencil sh sl -> match sh,sl with
+      | [], [] -> Stencil.( stencil % final_stencil), []
       | Elt k :: q, Elt m :: sq ->
-        filter Stride.(stride $ Nat.{size=to_int k; offset=to_int m}) q sq
+        filter Stencil.(stencil % Nat.(to_int m +: (to_int k) *: N) ) q sq
       | Elt k :: q, Range r :: sq ->
-        let stride, sh = filter (Stride.offset stride) q sq in
-        let nat = Range.len r and phy = stride.Stride.size * Nat.to_int k in
-            offset stride, (elt phy nat) :: sh
+        let stencil, sh = filter (transl stencil) q sq in
+        let nat = Range.len r and phy = stencil.Stencil.linear * Nat.to_int k in
+            transl stencil, (elt phy nat) :: sh
       | Elt k :: q, All :: sq ->
-        let stride, sh = filter (offset stride) q sq in
-        let phy = stride.Stride.size * Nat.to_int k in
-        offset stride, (elt phy k) :: sh
+        let stencil, sh = filter (transl stencil) q sq in
+        let phy = stencil.Stencil.linear * Nat.to_int k in
+        transl stencil, (elt phy k) :: sh
       (* P_elt *)
       | P_elt (size,_k) :: q, Elt m :: sq ->
-        filter Stride.(stride $ Nat.{size; offset=to_int m}) q sq
+        filter Stencil.(stencil % (Nat.to_int m +: size *: N) ) q sq
       | P_elt (size,_k) :: q, Range r :: sq ->
-        let stride, sh = filter (offset stride) q sq in
-        let nat = Range.len r and phy = stride.Stride.size * size in
-        offset stride, (elt phy nat) :: sh
+        let stencil, sh = filter (transl stencil) q sq in
+        let nat = Range.len r and phy = stencil.Stencil.linear * size in
+        transl stencil, (elt phy nat) :: sh
       | P_elt (phy,k) :: q, All :: sq ->
-        let stride, sh = filter (offset stride) q sq in
-        let phy = stride.Stride.size * phy in
-        offset stride, (elt phy k) :: sh
+        let stencil, sh = filter (transl stencil) q sq in
+        let phy = stencil.Stencil.linear * phy in
+        transl stencil, (elt phy k) :: sh
   in
-  filter stride shape slice
+  filter stencil shape slice
 
 let rec filter_with_copy: type sh sh2. sh eq -> (sh, sh2) s ->  sh2 eq =
-    (* possible optimisation merge with scan_filter above *)
     fun sh sl -> match sh,sl with
       | [], [] -> []
       | Elt _ :: q, Elt _ :: sq -> filter_with_copy q sq
@@ -164,21 +163,21 @@ let rec filter_with_copy: type sh sh2. sh eq -> (sh, sh2) s ->  sh2 eq =
 
 (** Note: fortran layout *)
 let rec full_position_gen: type sh. shape:sh eq -> indices:sh lt
-  ->stride:Stride.t -> Stride.t = fun ~shape ~indices ~stride ->
+  ->stencil:Stencil.t -> Stencil.t = fun ~shape ~indices ~stencil ->
   match shape , indices  with
   | Elt dim::shape, Elt i::indices ->
     full_position_gen ~shape ~indices
-      ~stride:Stride.(stride $ { offset = Nat.to_int i; size = Nat.to_int dim})
+      ~stencil:Stencil.(stencil % (Nat.to_int i +: Nat.to_int dim *: N))
   | P_elt (size,_)::shape, Elt i::indices ->
     full_position_gen ~shape ~indices
-      ~stride:Stride.( stride $ { size; offset= Nat.to_int i } )
-  | [], [] -> stride
+      ~stencil:Stencil.( stencil % (Nat.to_int i +: size *: N) )
+  | [], [] -> stencil
 
-let full_position  ~stride ~shape ~indices =
-  full_position_gen  ~shape ~indices ~stride
+let full_position  ~stencil ~shape ~indices =
+  full_position_gen  ~shape ~indices ~stencil
 
-let position ~stride ~shape ~indices =
-  (full_position ~stride ~shape ~indices).Stride.offset
+let position ~stencil ~shape ~indices =
+  Stencil.first @@ full_position ~stencil ~shape ~indices
 
 let rec iter: type sh. (sh lt -> unit) -> sh eq -> unit = fun f sh ->
   match sh with

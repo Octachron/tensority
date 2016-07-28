@@ -17,8 +17,9 @@
     a shape [[Elt _2i; Elt _4i]] belongs to both subtypes.
 *)
 
-(** {2 Main type definitions} *)
-(** {3 Auxiliary types} *)
+(** {2 Main type definitions}
+    {3 Auxiliary types} *)
+
 type nil = private Nil
 (** Inhabited utility type *)
 
@@ -178,17 +179,18 @@ val split_1:
     and the remaining elements *)
 val split_1_nat: ('n Nat.succ * ('a * 'b)) eq -> 'a Nat.eq * ('n * 'b) eq
 
-(** [slice_1 stride n shape] computes the resulting stride and shape after fixing the first
+(** [slice_1 stencil n shape] computes the resulting stencil and shape after fixing the first
     index of [shape] to [n]
  *)
 val slice_1:
-  Stride.t -> 'a Nat.lt -> ('n Nat.succ * ( 'a * 'q)) eq ->
-  Stride.t * ( 'n * 'q ) eq
+  Stencil.t -> 'a Nat.lt -> ('n Nat.succ * ( 'a * 'q)) eq ->
+  Stencil.t * ( 'n * 'q ) eq
 
 (** {3 Filtering } *)
+
 val filter :
-  ?final_stride:Stride.t -> stride:Stride.t -> 'a eq -> ('a, 'b) s ->
-  Stride.t * 'b eq
+  ?final_stencil:Stencil.t -> stencil:Stencil.t -> 'a eq -> ('a, 'b) s ->
+  Stencil.t * 'b eq
 
 val filter_with_copy : 'sh eq -> ('sh, 'sh2) s -> 'sh2 eq
 
@@ -209,12 +211,12 @@ module Slice :
 (** {2 Position computation} *)
 
 val full_position_gen :
-  shape:'sh eq -> indices:'sh lt -> stride:Stride.t -> Stride.t
+  shape:'sh eq -> indices:'sh lt -> stencil:Stencil.t -> Stencil.t
 
 val full_position :
-  stride:Stride.t -> shape:'a eq -> indices:'a lt -> Stride.t
+  stencil:Stencil.t -> shape:'a eq -> indices:'a lt -> Stencil.t
 
-val position : stride:Stride.t -> shape:'a eq -> indices:'a lt -> int
+val position : stencil:Stencil.t -> shape:'a eq -> indices:'a lt -> int
 
 
 (** {2 Iter, map and fold } *)

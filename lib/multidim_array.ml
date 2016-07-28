@@ -4,11 +4,11 @@ let (%) a n x = A.unsafe_set a n x
 let (=:) = (@@)
 let (@?) a n = A.unsafe_get a n
 
-type 'x t = { shape: 'sh Shape.l; stride: Stride.t; array: 'elt array }
+type 'x t = { shape: 'sh Shape.l; stencil: Stencil.t; array: 'elt array }
   constraint 'x = <shape:'sh; elt:'elt>
 
 let size m = Shape.logical_size m.shape
-let is_sparse m = Shape.is_sparse m.shape || Stride.is_neutral m.stride
+let is_sparse m = Shape.is_sparse m.shape || Stencil.is_all m.stencil
 
 module Unsafe = struct
 
@@ -18,46 +18,46 @@ module Unsafe = struct
     if len <> size  then
       raise @@ Dimension_error("Multidim_array.create_unsafe", size, len)
     else
-      {shape; array; stride = Stride.neutral }
+      {shape; array; stencil = Stencil.all }
 end
 
 [%%indexop.arraylike
   let get: <shape:'sh; elt:'elt> t -> 'sh Shape.lt -> 'elt = fun t indices ->
     let p =
-      Shape.position ~stride:t.stride ~shape:t.shape ~indices in
+      Shape.position ~stencil:t.stencil ~shape:t.shape ~indices in
     t.array @? p
 
   let set: <shape:'sh; elt:'elt> t -> 'sh Shape.lt -> 'elt -> unit =
     fun t indices value ->
     let p =
-      Shape.position ~stride:t.stride ~shape:t.shape ~indices in
+      Shape.position ~stencil:t.stencil ~shape:t.shape ~indices in
     A.unsafe_set t.array p value
 ]
 
 [%%indexop
   let get_1: type nat. <shape:nat Shape.single; elt:'elt> t
     -> nat Nat.lt -> 'elt = fun t nat ->
-    let open Stride in
-    t.array @? ( t.stride.offset + t.stride.size * Nat.to_int nat )
+    let open Stencil in
+    t.array @? ( t.stencil.[Nat.to_int nat] )
 
   let get_2: type a b. <shape: (a,b) Shape.pair; elt:'elt> t
     -> a Nat.lt -> b Nat.lt -> 'elt = fun t i j ->
     let open Shape in
-    let open Stride in
-    let s = t.stride in
+    let open Stencil in
+    let s = t.stencil in
     match t.shape with
     | [Elt dim; _ ] ->
-      t.array @? Nat.( s.offset + s.size *( to_int i + to_int j * to_int dim) )
+      t.array @? Nat.( s.[to_int i + to_int j * to_int dim] )
     | [P_elt (phy,_); _ ] ->
-      t.array @? Nat.( s.offset+ s.size *( to_int i + to_int j * phy) )
+      t.array @? Nat.( s.[to_int i + to_int j * phy] )
 
   let get_3: type a b c. <shape: (a,b,c) Shape.triple; elt:'elt> t
     -> a Nat.lt -> b Nat.lt -> c Nat.lt -> 'elt = fun t i j k ->
-    let open Stride in
-    let s = t.stride in
+    let open Stencil in
+    let s = t.stencil in
     let get d1 d2 =
       let pos =
-        s.offset + s.size * Nat.( to_int i + d1 * ( to_int j + d2 * to_int k ) )
+        s.[Nat.( to_int i + d1 * ( to_int j + d2 * to_int k ) )]
       in
       t.array @? pos in
     let open Shape in
@@ -72,31 +72,29 @@ end
 
     let set_1: type nat. <shape:nat Shape.single; elt:'elt> t
       -> nat Nat.lt -> 'elt -> unit = fun t i x ->
-      let open Stride in
-      let s = t.stride in
-      t.array % (s.offset + s.size * Nat.to_int i) =: x
+      let s = t.stencil in
+      t.array % Stencil.(s.[Nat.to_int i]) =: x
 
 
     let set_2: type a b. <shape: (a,b) Shape.pair; elt:'elt> t
     -> a Nat.lt -> b Nat.lt -> 'elt -> unit = fun t i j x ->
       let open Shape in
-      let open Stride in
-      let s = t.stride in
+      let s = t.stencil in
       match t.shape with
       | [Elt dim; _ ] ->
-        let pos = s.offset + s.size * Nat.( to_int i + to_int j * to_int dim) in
+        let pos = Stencil.( s.[Nat.( to_int i + to_int j * to_int dim) ] ) in
         t.array % pos =: x
       | [P_elt (phy,_); _ ] ->
-        let pos = s.offset+ s.size * Nat.( to_int i + to_int j * phy) in
+        let pos = Stencil.( s.[Nat.( to_int i + to_int j * phy)] ) in
         t.array % pos =: x
 
   let set_3: type a b c. <shape: (a,b,c) Shape.triple; elt:'elt> t
     -> a Nat.lt -> b Nat.lt -> c Nat.lt -> 'elt -> unit = fun t i j k x ->
-    let open Stride in
-    let s = t.stride in
+    let s = t.stencil in
     let set d1 d2 =
       let pos =
-        s.offset + s.size * Nat.( to_int i + d1 * ( to_int j + d2 * to_int k ) )
+        let open Stencil in
+        s.[Nat.( to_int i + d1 * ( to_int j + d2 * to_int k ) )]
       in
       t.array % pos =: x in
     let open Shape in
@@ -118,7 +116,7 @@ let init_sh shape f =
   let size = Shape.physical_size shape in
   let z = Shape.zero shape in
   let array = A.make size @@ f z in
-  let m = {shape; array; stride = Stride.neutral } in
+  let m = {shape; array; stencil = Stencil.all } in
   Shape.iter_on shape (fun sh -> m.(sh) <- f sh);
   m
 
@@ -127,12 +125,12 @@ let ordinal (nat: 'a Nat.eq) : <elt:'a Nat.lt; shape: 'a Shape.single > t =
   Unsafe.create Shape.[Elt nat] @@ A.init (Nat.to_int nat) Nat.Unsafe.create
 
 let slice_first nat m =
-  let stride, shape = Shape.slice_1 m.stride nat m.shape in
-  { m with shape; stride }
+  let stencil, shape = Shape.slice_1 m.stencil nat m.shape in
+  { m with shape; stencil }
 
 let slice s m =
-  let stride, shape = Shape.filter ~stride:m.stride m.shape s in
-  { m with shape; stride }
+  let stencil, shape = Shape.filter ~stencil:m.stencil m.shape s in
+  { m with shape; stencil }
 
 module Dense = struct
 let copy ?(deep_copy=fun x -> x) : 'sh t -> 'sh t = fun ma ->
