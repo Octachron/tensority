@@ -130,6 +130,7 @@ module Sum : sig
 
   (** type for summand *)
   type 'a summand
+
   (** type for proof witness: the successful construction of a value
       of type [ ([s_1,..s_n],r) t ] implies that ∑ s_i = r *)
   type ('a, 'c) t
@@ -153,7 +154,7 @@ module Sum : sig
       [l'≤l] ⇒ [k' + l' < n].
       With a proof that [k + l = n], therefore we can safely add
       [k:k lt] and [l: l le] to obtain a natural number [n : n lt].
-*)
+  *)
   val adder : ('a * 'b ,'c) t -> 'a lt -> 'b le -> 'c lt
 end
 
