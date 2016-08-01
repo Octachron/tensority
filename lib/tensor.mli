@@ -81,6 +81,16 @@ val mult :
   < contr : 'a; cov : 'b > t ->
   < contr : 'b; cov : 'c > t -> < contr : 'a; cov : 'c > t
 
+
+(** Contract a (d,d) tensor with itself
+    [trace t =  ∑_{s≺d} t.(s,s)
+ *)
+val trace :
+  < contr : 'a; cov : 'a > t -> float
+
+(** Fully contracts two tensors to obtains a scalar
+    [full contraction a b = trace (mult a b)
+ *)
 val full_contraction :
   < contr : 'a; cov : 'b > t -> < contr : 'b; cov : 'a > t -> float
 

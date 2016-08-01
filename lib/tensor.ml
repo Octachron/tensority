@@ -224,6 +224,14 @@ module Sparse = struct
       )
   ; r
 
+
+  let trace t =
+    let s = ref 0. in
+    Shape.iter_on t.contr ( fun sh ->
+        s := !s +. t.(sh,sh)
+      )
+  ; !s
+
   let full_contraction t1 t2 =
     let s = ref 0. in
     Shape.iter_on t1.contr ( fun contr ->
@@ -300,6 +308,13 @@ let mult (t1: <contr:'left; cov:'mid> t) (t2: <contr:'mid; cov:'right> t) :
   {array; contr = t1.contr; cov = t2.cov; stencil = full }
 
 
+let trace (t1: <contr:'a; cov:'a> t ) =
+  let size = contr_size t1 in
+  let s = ref 0. in
+  iter_on (size ^ stop) (fun i ->
+      s := !s +. (t1.array @? i + size * i)
+    )
+  ; !s
 
 let full_contraction (t1: <contr:'a; cov:'b> t ) (t2: < contr:'b; cov:'a > t) =
   let left = contr_size t1 and right = cov_size t1 in
@@ -334,6 +349,11 @@ let mult t1 t2 =
   else
     Full.mult t1 t2
 
+let trace t =
+  if is_sparse t then
+    Sparse.trace t
+  else
+    Full.trace t
 
 let full_contraction t1 t2 =
   if is_sparse t1 || is_sparse t2 then
