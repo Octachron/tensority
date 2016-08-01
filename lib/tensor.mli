@@ -115,7 +115,8 @@ module Operators: Signatures.tensor_operators with
 val copy : < contr : 'a; cov : 'b > t -> < contr : 'a; cov : 'b > t
 
 val partial_copy :
-  < contr : 'a; cov : 'b > t -> ('a, 'a) Shape.s * ('b, 'b) Shape.s -> unit
+  < contr : 'a; cov : 'b > t -> ('a, 'c) Shape.s * ('b, 'd) Shape.s ->
+  < contr : 'c; cov : 'd > t
 
 val slice :
   < contr : 'a; cov : 'b > t ->

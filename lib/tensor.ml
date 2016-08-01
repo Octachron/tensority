@@ -431,17 +431,22 @@ let copy t =
   else
     { t with array = A.copy t.array }
 
-let partial_copy t (f1,f2) =
-  let tnew = zero
-      ~contr:(Shape.filter_with_copy t.contr f1)
-      ~cov:(Shape.filter_with_copy t.cov f2) in
-  Shape.iter_masked_dual
+let partial_copy (type a b c d)
+    (t:<contr:a;cov:b> t)
+    (f1,f2: (a,c) Shape.s * (b,d) Shape.s)
+    : <contr:c; cov:d> t
+  =
+  let contr = Shape.filter_with_copy t.contr f1 in
+  let cov = Shape.filter_with_copy t.cov f2 in
+  let tnew: <contr:c; cov:d> t  = zero ~contr ~cov in
+  Shape.iter_extended_dual
     (fun sh2 sh2' ->
-       Shape.iter_masked_dual (
+       Shape.iter_extended_dual (
          fun sh1 sh1' ->
            tnew.(sh1,sh2) <- t.(sh1',sh2')
-       ) t.contr f1
-    )  t.cov f2
+       ) contr f1
+    )  cov f2;
+  tnew
 
 let slice t (f1,f2) =
   let final_stencil, cov = Shape.filter ~stencil:full t.cov f2 in
