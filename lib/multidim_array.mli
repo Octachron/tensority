@@ -1,4 +1,4 @@
-type 'a t  constraint 'a = < elt : 'elt; shape : 'sh >
+type 'a t  constraint 'a = < elt : 'elt; shape : 'n * 'sh >
 (** Values of type [<elt:'e; shape: a_1 * ( a_2 * ...( a_n * nil ) ) > t]
     are multidimensional arrays with dimension a_1, ..., a_n where a_1 to
     a_n are type-level representation of integers *)
@@ -85,30 +85,30 @@ val slice_first:
 (** [slice filter m] takes a sparse shape [ filter = [s_1; ...; s_n] ] with [ s_k = Elt k | Range r | All ]
     and creates an array whose shape is made of the remaining free indices in [shape/filter] *)
 val slice :
-  ('a, 'b) Shape.s ->
+  ('a, 'b) Mask.t ->
   < elt : 'c; shape : 'a > t -> < elt : 'c; shape : 'b > t
 
 (** {2 Slicing indexing operators} *)
 val set:
   < elt : 'a; shape : 'b > t ->
-  ('b, 'c) Shape.s -> < elt : 'a; shape : 'c > t -> unit
+  ('b, 'c) Mask.t -> < elt : 'a; shape : 'c > t -> unit
   [@@indexop.stringlike]
 
 val get :
   < elt : 'a; shape : 'b > t ->
-  ('b, 'c) Shape.s -> < elt : 'a; shape : 'c > t
+  ('b, 'c) Mask.t -> < elt : 'a; shape : 'c > t
   [@@indexop.stringlike]
 
 (** [partial_copy filter m] creates a fresh copy of the slice [slice filter m] *)
 val partial_copy :
   ?deep_copy:('a -> 'a) ->
-  ('b, 'c) Shape.s ->
+  ('b, 'c) Mask.t ->
   < elt : 'a; shape : 'b > t -> < elt : 'a; shape : 'c > t
 
 (** [partial_blit ~from ~to_ filter] copy the values of [from] to the slice [slice filter to] *)
 val partial_blit :
   from:< elt : 'a; shape : 'b > t ->
-  to_:< elt : 'a; shape : 'c > t -> ('c, 'b) Shape.s -> unit
+  to_:< elt : 'a; shape : 'c > t -> ('c, 'b) Mask.t -> unit
 
 
 (** Reshape function *)
@@ -118,7 +118,8 @@ val partial_blit :
     Raise a [Dimension_error] otherwise.
     @todo Multiplication proof.
 *)
-val reshape: 'a Shape.l -> < elt : 'b; shape : 'b > t -> < elt : 'b; shape : 'a > t
+val reshape: 'sh Shape.l -> < elt : 'e; shape : 'sh > t
+  -> < elt : 'e; shape : 'sh > t
 
 (** [reshape_inplace sh m] reinterpret the dense multidimensional array
     [m] as an array of shape [sh]. The function returns [None] if the
@@ -126,8 +127,9 @@ val reshape: 'a Shape.l -> < elt : 'b; shape : 'b > t -> < elt : 'b; shape : 'a 
     Raise a [Dimension_error] otherwise.
     @todo Multiplication proof.
 *)
-val reshape_inplace: 'a Shape.l -> < elt : 'b; shape : 'b > t
-  -> < elt : 'b; shape : 'a > t option
+val reshape_inplace: 'sh Shape.l
+  -> < elt : 'e; shape : 'sh > t
+  -> < elt : 'e; shape : 'sh > t option
 
 
 (** {2 Map, iter and fold functions} *)

@@ -8,14 +8,14 @@ let rotation theta =
   ]
 
 let m = rotation 1.
-let c1 = m.[ All; 1i ]
+let c1 = m.[ All; 1j ]
 let one = [%vec ( 1., 1. ) ]
 
 let d = det @@ rotation 0.95
 
 let v = rotation 2. * one
 
-let c = (rotation 0.45).{1j, 0j}
-let x = v.{ 1j }
+let c = (rotation 0.45).{1i, 0i}
+let x = v.{ 1i }
 
 let v1 = (transpose v).( __ ; 1i )

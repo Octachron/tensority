@@ -6,7 +6,7 @@ open Multidim_array
 open Nat_defs
 open Shape
 
-let m = init_sh [253s;253s] ( function [Elt k; Elt l] ->
+let m = init_sh [253s; 253s] ( function [k; l] ->
     Nat.to_int k + Nat.to_int l)
 
 let t = [%array 4
@@ -16,27 +16,27 @@ let t = [%array 4
       ]
 ]
 
-let mat = t.[ 1i, 2i, All, All ]
-let k = mat.[0i, 1i]
+let mat = t.[ 1j, 2j, All, All ]
+let k = mat.[0j, 1j]
 
 let w = [%array (0, 2) ]
 
-let z = init_sh [502103s] ( function [Elt k] -> Nat.to_int k)
+let z = init_sh [502103s] ( function [k] -> Nat.to_int k)
 
-let v = init_sh [253s] ( fun [Elt k] -> Nat.to_int k)
+let v = init_sh [253s] ( fun [k] -> Nat.to_int k)
 
-let f= [ Elt _0i; All]
+let f= Mask.[ Elt _0i; All]
 
-;; m.[ 252i, All ] <- v
-;; let x =  v.{ 0j }
+;; m.[ 252j, All ] <- v
+;; let x =  v.{ 0i }
 
-;; w.[ 1i ]
+;; w.[ 1j ]
 
 (* let r = [%range 0 -- 50 ] *)
 
 let zr = z.[ 0 #-># 50 ~by: 5 ]
 let zr' = z.[[%range 0 50]]
 
-let xr = zr.[ 10i ]
+let xr = zr.[ 10j ]
 
-let tx = t.[1i,0 #-># 1, All, 0i ]
+let tx = t.[1j,0 #-># 1, All, 0j ]

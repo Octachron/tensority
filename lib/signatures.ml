@@ -43,7 +43,7 @@ end
 
 module type tensor_operators =
 sig
-  type 'a t constraint 'a = <contr:'b; cov:'c>
+  type 'a t constraint 'a = <contr:'n * 'b; cov: 'm * 'c>
   type ('a,'b) matrix
   val ( * ) :
     < contr : 'a; cov : 'b > t ->

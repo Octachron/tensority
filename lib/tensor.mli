@@ -19,7 +19,7 @@
 
 (** [<contr: dims ; cov:dims' > t] encodes a tensor
 with contravariant dimensions [dims] and covariant dimension [dims']  *)
-type 'c t constraint 'c = < contr : 'a; cov : 'b >
+type 'c t constraint 'c = < contr:'n * 'a; cov:'n2 * 'b >
 
 
 (** Shortcut type for vectors = (1,0) tensors *)
@@ -224,28 +224,28 @@ include Signatures.tensor_operators with
 
 
 val partial_copy :
-  < contr : 'a; cov : 'b > t -> ('a, 'c) Shape.s * ('b, 'd) Shape.s ->
+  < contr : 'a; cov : 'b > t -> ('a, 'c) Mask.t * ('b, 'd) Mask.t ->
   < contr : 'c; cov : 'd > t
 
 val slice :
   < contr : 'a; cov : 'b > t ->
-  ('a, 'c) Shape.s * ('b, 'd) Shape.s -> < contr : 'c; cov : 'd > t
+  ('a, 'c) Mask.t * ('b, 'd) Mask.t -> < contr : 'c; cov : 'd > t
 
 val blit : < contr : 'a; cov : 'b > t -> < contr : 'a; cov : 'b > t -> unit
 val partial_blit :
   < contr : 'a; cov : 'b > t ->
-  ('a, 'c) Shape.s_to_eq * ('b, 'd) Shape.s_to_eq ->
+  ('a, 'c) Mask.s_to_eq * ('b, 'd) Mask.s_to_eq ->
   < contr : 'c; cov : 'd > t -> unit
 
 val get :
   < contr : 'a; cov : 'b > t ->
-  ('a, 'c) Shape.s * ('b, 'd) Shape.s ->
+  ('a, 'c) Mask.t * ('b, 'd) Mask.t ->
   < contr : 'c; cov : 'd > t
   [@@indexop.stringlike]
 
 val set :
   < contr : 'a; cov : 'b > t ->
-  ('a, 'c) Shape.s_to_eq * ('b, 'd) Shape.s_to_eq ->
+  ('a, 'c) Mask.s_to_eq * ('b, 'd) Mask.s_to_eq ->
   < contr : 'c; cov : 'd > t -> unit
   [@@indexop.stringlike]
 

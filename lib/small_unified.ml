@@ -77,8 +77,8 @@ type _ t =
       let open Shape in
       match[@warning "-4"] t, contr, cov with
       | Scalar f, [] , [] -> !f
-      | Vec v, [Elt a], [] -> V.( v.(a) )
-      | Matrix m, [Elt i], [Elt j] -> M.( m.(i,j) )
+      | Vec v, [a], [] -> V.( v.(a) )
+      | Matrix m, [i], [j] -> M.( m.(i,j) )
       | _ -> .
 
     and set: type a b. <contr:a; cov:b> t -> (a Shape.lt * b Shape.lt) -> float -> unit
@@ -86,8 +86,8 @@ type _ t =
         let open Shape in
         match[@warning "-4"] t, contr, cov with
         | Scalar f, [] , [] -> f := x
-        | Vec v, [Elt a] ,  [] -> V.( v.(a) <- x )
-        | Matrix m, [Elt i], [Elt j] -> M.( m.(i,j) <- x )
+        | Vec v, [a] ,  [] -> V.( v.(a) <- x )
+        | Matrix m, [i], [j] -> M.( m.(i,j) <- x )
         | _ -> .
   ]
 

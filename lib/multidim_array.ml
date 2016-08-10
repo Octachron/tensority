@@ -4,106 +4,67 @@ let (%) a n x = A.unsafe_set a n x
 let (=:) = (@@)
 let (@?) a n = A.unsafe_get a n
 
-type 'x t = { shape: 'sh Shape.l; stencil: Stencil.t; array: 'elt array }
-  constraint 'x = <shape:'sh; elt:'elt>
+type 'x t = { shape: ('n * 'sh) Shape.l;
+              offset:int;
+              strides: 'n Stride.t;
+              array: 'elt array }
+  constraint 'x = <shape:'n * 'sh; elt:'elt>
 
-let size m = Shape.logical_size m.shape
-let is_sparse m = Shape.is_sparse m.shape || Stencil.is_all m.stencil
+let size m = Shape.size m.shape
+let is_sparse m = m.offset <> 0 || (Shape.size m.shape < Stride.size m.strides)
 
 module Unsafe = struct
 
   let create shape array =
-    let shape = Shape.detach shape in
-    let len =  A.length array and size = Shape.physical_size shape in
+    let strides = Stride.create shape in
+    let len =  A.length array and size = Stride.size strides in
     if len <> size  then
       raise @@ Dimension_error("Multidim_array.create_unsafe", size, len)
     else
-      {shape; array; stencil = Stencil.all }
+      {shape; array; strides; offset = 0 }
 end
+
+let position (m:<shape:'sh;elt:'elt> t) (indices:'sh Shape.lt) =
+      m.offset + Stride.position ~strides:m.strides ~indices
+
 
 [%%indexop.arraylike
   let get: <shape:'sh; elt:'elt> t -> 'sh Shape.lt -> 'elt = fun t indices ->
-    let p =
-      Shape.position ~stencil:t.stencil ~shape:t.shape ~indices in
-    t.array @? p
+    t.array @? position t indices
 
   let set: <shape:'sh; elt:'elt> t -> 'sh Shape.lt -> 'elt -> unit =
     fun t indices value ->
-    let p =
-      Shape.position ~stencil:t.stencil ~shape:t.shape ~indices in
+    let p = position t indices in
     A.unsafe_set t.array p value
 ]
 
 [%%indexop
   let get_1: type nat. <shape:nat Shape.single; elt:'elt> t
     -> nat Nat.lt -> 'elt = fun t nat ->
-    let open Stencil in
-    t.array @? ( t.stencil.[Nat.to_int nat] )
+    t.([nat])
 
   let get_2: type a b. <shape: (a,b) Shape.pair; elt:'elt> t
     -> a Nat.lt -> b Nat.lt -> 'elt = fun t i j ->
-    let open Shape in
-    let open Stencil in
-    let s = t.stencil in
-    match t.shape with
-    | [Elt dim; _ ] ->
-      t.array @? Nat.( s.[to_int i + to_int j * to_int dim] )
-    | [P_elt (phy,_); _ ] ->
-      t.array @? Nat.( s.[to_int i + to_int j * phy] )
+    t.([i;j])
 
   let get_3: type a b c. <shape: (a,b,c) Shape.triple; elt:'elt> t
     -> a Nat.lt -> b Nat.lt -> c Nat.lt -> 'elt = fun t i j k ->
-    let open Stencil in
-    let s = t.stencil in
-    let get d1 d2 =
-      let pos =
-        s.[Nat.( to_int i + d1 * ( to_int j + d2 * to_int k ) )]
-      in
-      t.array @? pos in
-    let open Shape in
-    match t.shape with
-    | [Elt d1; Elt d2; _ ] ->
-      get (Nat.to_int d1) (Nat.to_int d2)
-    | [P_elt(d1,_); P_elt (d2,_); _ ] -> get d1 d2
-    | [ Elt d1; P_elt(d2,_) ; _ ] -> get (Nat.to_int d1) d2
-    | [P_elt (d1,_); Elt d2; _ ] -> get d1 (Nat.to_int d2)
+    t.([i;j;k])
 
 
-
-    let set_1: type nat. <shape:nat Shape.single; elt:'elt> t
+  let set_1: type nat. <shape:nat Shape.single; elt:'elt> t
       -> nat Nat.lt -> 'elt -> unit = fun t i x ->
-      let s = t.stencil in
-      t.array % Stencil.(s.[Nat.to_int i]) =: x
-
+    t.([i])<- x
 
     let set_2: type a b. <shape: (a,b) Shape.pair; elt:'elt> t
     -> a Nat.lt -> b Nat.lt -> 'elt -> unit = fun t i j x ->
       let open Shape in
-      let s = t.stencil in
-      match t.shape with
-      | [Elt dim; _ ] ->
-        let pos = Stencil.( s.[Nat.( to_int i + to_int j * to_int dim) ] ) in
-        t.array % pos =: x
-      | [P_elt (phy,_); _ ] ->
-        let pos = Stencil.( s.[Nat.( to_int i + to_int j * phy)] ) in
-        t.array % pos =: x
+      t.([i;j])<- x
 
   let set_3: type a b c. <shape: (a,b,c) Shape.triple; elt:'elt> t
     -> a Nat.lt -> b Nat.lt -> c Nat.lt -> 'elt -> unit = fun t i j k x ->
-    let s = t.stencil in
-    let set d1 d2 =
-      let pos =
-        let open Stencil in
-        s.[Nat.( to_int i + d1 * ( to_int j + d2 * to_int k ) )]
-      in
-      t.array % pos =: x in
     let open Shape in
-    match t.shape with
-    | [Elt d1; Elt d2; _ ] ->
-      set (Nat.to_int d1) (Nat.to_int d2)
-    | [P_elt(d1,_); P_elt (d2,_); _ ] -> set d1 d2
-    | [ Elt d1; P_elt(d2,_) ; _ ] -> set (Nat.to_int d1) d2
-    | [P_elt (d1,_); Elt d2; _ ] -> set d1 (Nat.to_int d2)
+    t.([i;j;k])<- x
 ]
 
 
@@ -112,25 +73,27 @@ let shape t = t.shape
 
 
 let init_sh shape f =
-  let shape = Shape.detach shape in
-  let size = Shape.physical_size shape in
+  let strides = Stride.create shape in
+  let size = Stride.size strides in
   let z = Shape.zero shape in
   let array = A.make size @@ f z in
-  let m = {shape; array; stencil = Stencil.all } in
+  let m = {shape; array; strides; offset = 0 } in
   Shape.iter_on shape (fun sh -> m.(sh) <- f sh);
   m
 
 
 let ordinal (nat: 'a Nat.eq) : <elt:'a Nat.lt; shape: 'a Shape.single > t =
-  Unsafe.create Shape.[Elt nat] @@ A.init (Nat.to_int nat) Nat.Unsafe.create
+  Unsafe.create Shape.[nat] @@ A.init (Nat.to_int nat) Nat.Unsafe.create
 
-let slice_first nat m =
-  let stencil, shape = Shape.slice_1 m.stencil nat m.shape in
-  { m with shape; stencil }
+let slice_first (nat:'a Nat.lt) (m:<shape:_ Nat.succ * ('a * _); ..> t)  =
+  let strides, shape = Stride.slice_1 m.strides, Shape.tail_1 m.shape in
+  let offset = m.offset + (Stride.first m.strides) * (Nat.to_int nat) in
+  { m with shape; strides; offset }
 
 let slice s m =
-  let stencil, shape = Shape.filter ~stencil:m.stencil m.shape s in
-  { m with shape; stencil }
+  let shape = Mask.filter m.shape s in
+  let offset, strides = Stride.filter m.strides s in
+  { m with shape; strides; offset= offset + m.offset }
 
 module Dense = struct
 let copy ?(deep_copy=fun x -> x) : 'sh t -> 'sh t = fun ma ->
@@ -162,8 +125,8 @@ let fold_all_left f acc m =
 let reshape_inplace:
   'sh2 Shape.l -> <shape:'sh; elt:'elt> t -> <shape:'sh2; elt:'elt> t =
   fun sh2 m ->
-  let s = size m and s2 = Shape.logical_size sh2 in
-  if size m <> Shape.logical_size sh2 then
+  let s = size m and s2 = Shape.size sh2 in
+  if size m <> Shape.size sh2 then
     raise @@ Dimension_error ("Multidim_array.reshape", s, s2)
   else
     { m with shape = sh2 }
@@ -173,7 +136,7 @@ end
 module Sparse = struct
 
   let copy ?(deep_copy=(fun x->x)) m =
-    let size = Shape.logical_size m.shape and shape = Shape.detach m.shape in
+    let size = Shape.size m.shape and shape = m.shape in
     if size = 0 then
       Unsafe.create shape [| |]
     else
@@ -182,9 +145,9 @@ module Sparse = struct
     ; m'
 
   let partial_blit: from:<shape:'sh2; elt:'a> t -> to_:<shape:'sh;elt:'a> t
-  -> ('sh,'sh2) Shape.s -> unit =
+  -> ('sh,'sh2) Mask.t -> unit =
   fun ~from ~to_ filter ->
-    Shape.iter_masked_dual
+    Mask.iter_masked_dual
       (fun sh sh' -> to_.(sh) <- from.(sh') )
       to_.shape filter
 
@@ -235,9 +198,9 @@ let map f m =
   ) f m
 
 let map_first f m =
-  let nat, _  = Shape.split_1_nat m.shape in
+  let nat, _  = Shape.split_1 m.shape in
   let open Shape in
-  init_sh [Elt nat] (fun [Elt n] -> f @@ slice_first n m)
+  init_sh [nat] (fun [n] -> f @@ slice_first n m)
 
 let map2 f m m2 =
   ( if is_sparse m || is_sparse m2 then Sparse.map2 else Dense.map2) f m m2
@@ -257,7 +220,7 @@ let fold_all_left f acc m =
       f acc m
 
 let fold_top_left f acc m =
-  let k, _ = Shape.split_1_nat m.shape in
+  let k, _ = Shape.split_1 m.shape in
   Nat.fold_on k acc (fun acc nat ->
       f acc (slice_first nat m)
     )

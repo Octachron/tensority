@@ -99,13 +99,11 @@ let le = [%type: [`Lt|`Eq] ]
 module Expr = struct
   let nat loc kind typ value =
     [%expr let open Nat in
-           let nat: ([%t typ],[%t kind]) Nat.t =
-                             Unsafe.create [%e value] in nat ][@metaloc loc]
+            (Unsafe.create [%e value]: ([%t typ],[%t kind]) Nat.t) ]
+      [@metaloc loc]
 
   let shape loc kind typ value =
-    [%expr let nat = [%e nat loc kind typ value] in
-           Elt (nat)
-    ][@@metaloc loc]
+    [%expr Mask.Elt [%e nat loc kind typ value]][@@metaloc loc]
 
   let int loc n = H.Exp.constant ~loc (H.Const.int n)
 end
@@ -249,9 +247,9 @@ let constant loc super =function
       let open Ints in
       match m with
       | 'k' -> Eq.nat loc n
-      | 's' -> Eq.int loc n
-      | 'i' -> Lt.int loc n
-      | 'j' -> Lt.nat loc n
+      | 's' -> Eq.nat loc n
+      | 'i' -> Lt.nat loc n
+      | 'j' -> Lt.int loc n
       | 'p' -> Le.nat loc n
       | _ -> super
     end
@@ -288,7 +286,7 @@ module Array_lit = struct
   let vec loc = function
   | { pexp_desc = Pexp_tuple s; _ } as e ->
     let a = {e with pexp_desc = Pexp_array s} in
-    let nat = Ints.Eq.int loc @@ List.length s in
+    let nat = Ints.Eq.nat loc @@ List.length s in
   [%expr Unsafe.create Shape.[[%e nat]] [%e a]][@metaloc loc]
   | _ ->
     error loc "expected tuple in [%%vec ...]"
@@ -353,7 +351,7 @@ module Array_lit = struct
     let nested = extract_nested kind loc level e in
     let shape_int = compute_and_check_shape kind loc level nested in
     let l = flatten_nested nested [] in
-    let shape = Expr.to_list loc @@ List.map (Ints.Eq.int loc) shape_int in
+    let shape = Expr.to_list loc @@ List.map (Ints.Eq.nat loc) shape_int in
     let array = H.Exp.array ~loc l in
     [%expr [%e kind.fn] [%e shape] [%e array] ]
 
@@ -374,7 +372,7 @@ module Array_lit = struct
     let shape_int = compute_and_check_shape kind loc level nested in
     let l = flatten_nested nested [] in
     let contr, cov  = split contr shape_int in
-    let shape l = Expr.to_list loc @@ List.map (Ints.Eq.int loc) l in
+    let shape l = Expr.to_list loc @@ List.map (Ints.Eq.nat loc) l in
     let array = H.Exp.array ~loc l in
     [%expr [%e kind.fn] ~contr:[%e shape contr] ~cov:[%e shape cov] [%e array] ]
 
@@ -396,7 +394,7 @@ let range loc ?by start stop =
   ; let len = 1 + (stop - start) / step in
     let start = Ints.Lt.nat loc start and stop = Ints.Lt.nat loc stop
     and len = Ints.Eq.nat loc len and step = Ints.Expr.int loc step in
-    [%expr Shape.Range(
+    [%expr Mask.Range(
            Range.create
              ~start:[%e start] ~stop:[%e stop] ~step:[%e step] ~len:[%e len]
          )
