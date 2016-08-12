@@ -69,8 +69,11 @@ type 'a le = ('a, [`Eq|`Lt]) t
 
 (** {3 Unsafe functions} *)
 module Unsafe: sig
+  type unsafe
   val create : int -> ('a, 'b) t
   val magic : ('a, 'b) t -> ('c, 'd) t
+  val eq: int -> unsafe eq
+  val lt: int -> unsafe lt
 end
 
 (** {3 Conversion and printing } *)
@@ -82,10 +85,14 @@ val show : ('a, 'b) t -> string
 val zero : ('a, 'b) t
 val succ : ('a, 'b) t -> int
 
-(** {3 Dynamic natural} *)
-module Dynamic :
-  functor (D : sig val dim : int end) ->
-    sig type t = private T val dim : t eq end
+(** {3 Dynamic natural}
+    The dynamic functor allow to safely use naturals not known at
+    compile time. The safety of dynamic natural is guaranteed by
+    disabling the possibility to construct ['a lt] natural.
+*)
+module type dynamic = sig type t val dim: t eq end
+module Dynamic : sig val dim : int end -> dynamic
+val dynamic: int -> (module dynamic)
 
 
 (** {2 Iter, map, fold functions} *)

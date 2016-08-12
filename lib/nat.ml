@@ -16,8 +16,11 @@ type +'a le = ('a,lem) t
 
 (* Unsafe functions, to be used rarely and cautiously *)
 module Unsafe = struct
+  type unsafe
   let create n = n
   let magic n = n
+  let eq n = n
+  let lt n = n
 end
 
 (* Safe conversion functions *)
@@ -30,10 +33,12 @@ let zero = Unsafe.create 0
 let succ nat = succ @@ to_int nat
 
 (* Functor for dynamic natural *)
+module type dynamic = sig type t val dim: t eq end
 module Dynamic(D: sig val dim: int end)= struct
   type t = private T
   let dim: t eq = Unsafe.create D.dim
 end
+let dynamic dim = (module Dynamic(struct let dim=dim end): dynamic )
 
 (* Peano types ?? *)
 type z = private Z
