@@ -1,5 +1,4 @@
 open Tensor
-open Shape
 
 let rotation theta =
   [%matrix

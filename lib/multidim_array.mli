@@ -60,8 +60,8 @@ end
 val init_sh :
   'a Shape.eq -> ('a Shape.lt -> 'b) -> < elt : 'b; shape : 'a > t
 
-(** [ordinal n] is the sorted unidimensional array of all integer less than [n] equiped with a type bound
-    [''n Nat.lt] *)
+(** [ordinal n] is the sorted unidimensional array of all integers less than [n]
+    equiped with a type bound [ [%nat n] Nat.lt] *)
 val ordinal : 'a Nat.eq -> < elt : 'a Nat.lt; shape : 'a Shape.single > t
 
 (** {2 Copy functions} *)
@@ -70,10 +70,8 @@ val copy:
   ?deep_copy:('a -> 'a) ->
   < elt : 'a; shape : 'b > t -> < elt : 'a; shape : 'b > t
 
-
 val blit :
   from:< elt : 'a; shape : 'b > t -> to_:< elt : 'a; shape : 'b > t -> unit
-
 
 (** {2 Slicing function} *)
 

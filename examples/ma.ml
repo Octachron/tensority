@@ -3,10 +3,8 @@
 *)
 
 open Multidim_array
-open Nat_defs
-open Shape
 
-let m = init_sh [253s; 253s] ( function [k; l] ->
+let m = init_sh [253s; 253s] Shape.( function [k; l] ->
     Nat.to_int k + Nat.to_int l)
 
 let t = [%array 4
@@ -21,11 +19,9 @@ let k = mat.[0j, 1j]
 
 let w = [%array (0, 2) ]
 
-let z = init_sh [502103s] ( function [k] -> Nat.to_int k)
+let z = init_sh [502103s] Shape.( function [k] -> Nat.to_int k)
 
-let v = init_sh [253s] ( fun [k] -> Nat.to_int k)
-
-let f= Mask.[ Elt _0i; All]
+let v = init_sh [253s] Shape.( fun [k] -> Nat.to_int k)
 
 ;; m.[ 252j, All ] <- v
 ;; let x =  v.{ 0i }
