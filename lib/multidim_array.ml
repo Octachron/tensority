@@ -4,10 +4,12 @@ let (%) a n x = A.unsafe_set a n x
 let (=:) = (@@)
 let (@?) a n = A.unsafe_get a n
 
-type 'x t = { shape: ('n * 'sh) Shape.l;
-              offset:int;
-              strides: 'n Stride.t;
-              array: 'elt array }
+type 'x t = {
+  shape: ('n * 'sh) Shape.l;
+  offset:int;
+  strides: 'n Stride.t;
+  array: 'elt array
+}
   constraint 'x = <shape:'n * 'sh; elt:'elt>
 
 let size m = Shape.size m.shape
@@ -116,6 +118,8 @@ let map2 f (m: <shape:'sh; elt:'a > t) (m2: <shape:'sh; elt:'b > t) =
 let iter f m =
   A.iter f m.array
 
+let iter2 f m n =
+  A.iter2 f m.array n.array
 
 let fold_all_left f acc m =
   A.fold_left f acc m.array
@@ -172,6 +176,9 @@ module Sparse = struct
   let iter f m =
     Shape.iter_on m.shape (fun sh -> f m.(sh) )
 
+  let iter2 f m n =
+    Shape.iter_on m.shape (fun sh -> f m.(sh) n.(sh) )
+
   let fold_all_left f acc m =
     let acc =ref acc in
     Shape.iter_on m.shape (fun sh ->  acc := f !acc m.(sh))
@@ -208,6 +215,10 @@ let map2 f m m2 =
 let iter f m =
   if is_sparse m then Sparse.iter f m else Dense.iter f m
 
+let iter2 f m m2 =
+( if is_sparse m || is_sparse m2 then Sparse.iter2 else Dense.iter2) f m m2
+
+
 let iter_sh f = Sparse.iter_sh f
 
 let map_sh f = Sparse.map_sh f
@@ -237,11 +248,24 @@ let reshape_inplace dims t =
 let reshape dims t =
     Dense.reshape_inplace dims @@ copy t
 
-
 let partial_blit = Sparse.partial_blit
 
 let%indexop.stringlike get m f = slice f m
 and set to_ filter from = partial_blit ~from ~to_ filter
+
+(** Scanning functions *)
+let for_all p x =
+  fold_all_left (fun b x -> b && p x ) true x
+
+let exists p x =
+  fold_all_left (fun b x -> b || p x ) false x
+
+let mem x m =
+  fold_all_left (fun b y -> b || x = y  ) false m
+
+let memq x m =
+  fold_all_left (fun b y -> b || x == y  ) false m
+
 
 let find predicate ma =
   Shape.fold_left (fun l sh ->

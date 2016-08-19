@@ -166,6 +166,10 @@ val map2 :
 (** [iter f m] computes [f e] for every elements of [m] *)
 val iter : ('a -> unit) -> < elt : 'a; shape : 'b > t -> unit
 
+(** [iter f m] computes [f e] for every elements of [m] *)
+val iter2 : ('a -> 'b -> unit) -> < elt : 'a; shape : 'sh > t ->
+  <elt:'b; shape:'sh> t -> unit
+
 (** [iter_sh f m] computes [f index e] for every elements of [m] *)
 val iter_sh: ( 'b Shape.lt -> 'a -> unit) -> < elt : 'a; shape : 'b > t -> unit
 
@@ -185,11 +189,31 @@ val fold_top_left:
   <elt:'elt; shape: 'n Nat.succ * ( 'any * 'l ) > t ->
   'acc
 
+
+(** {2 Scanning functions} *)
+
+(** [for_all predicate m] is true if and only if [predicate] is true for
+    every element of the array.*)
+val for_all: ('a -> bool) -> <elt:'a; shape:'sh> t -> bool
+
+(** [exists predicate m] is true if and only if there is an element within the
+    array for whic [predicate] is true.*)
+val exists: ('a -> bool) -> <elt:'a; shape:'sh> t -> bool
+
+(** [mem x m] is true if and only if there is an element of the array
+    equal to x (in the sense of the structural equality (=) ).*)
+val mem: 'a -> <elt:'a; shape:'sh> t -> bool
+
+(** [memq x m] is true if and only if there is an element of the array
+    physically equal to x (i.e [ ∃s, x == m.(s) ] ).*)
+val memq: 'a -> <elt:'a; shape:'sh> t -> bool
+
 (** {2 Predicates functions}*)
 
 (** [find predicate m] returns all the multi-indices of the elements [e]
     of the array such that [predicate e] is true *)
 val find : ('a -> bool) -> < elt : 'a; shape : 'b > t -> 'b Shape.lt list
+
 
 (** {2 Printing functions} *)
 
