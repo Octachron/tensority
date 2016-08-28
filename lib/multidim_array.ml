@@ -15,7 +15,7 @@ type 'x t = {
 let size m = Shape.size m.shape
 let is_sparse m = m.offset <> 0 || (Shape.size m.shape < Stride.size m.strides)
 
-module Unsafe = struct
+module Unsafe_0 = struct
 
   let create shape array =
     let strides = Stride.create shape in
@@ -85,7 +85,7 @@ let init_sh shape f =
 
 
 let ordinal (nat: 'a Nat.eq) : <elt:'a Nat.lt; shape: 'a Shape.single > t =
-  Unsafe.create Shape.[nat] @@ A.init (Nat.to_int nat) Nat.Unsafe.create
+  Unsafe_0.create Shape.[nat] @@ A.init (Nat.to_int nat) Nat.Unsafe.create
 
 let slice_first (nat:'a Nat.lt) (m:<shape:_ Nat.succ * ('a * _); ..> t)  =
   let strides, shape = Stride.slice_1 m.strides, Shape.tail_1 m.shape in
@@ -142,9 +142,9 @@ module Sparse = struct
   let copy ?(deep_copy=(fun x->x)) m =
     let size = Shape.size m.shape and shape = m.shape in
     if size = 0 then
-      Unsafe.create shape [| |]
+      Unsafe_0.create shape [| |]
     else
-      let m' = Unsafe.create shape @@ A.make size (m.array @? 0) in
+      let m' = Unsafe_0.create shape @@ A.make size (m.array @? 0) in
       Shape.iter_on m.shape (fun sh -> m'.(sh) <- deep_copy m.(sh))
     ; m'
 
@@ -239,19 +239,25 @@ let fold_top_left f acc m =
 let partial_copy ?(deep_copy=fun x -> x) s m =
   Sparse.copy ~deep_copy @@ slice s m
 
-let reshape_inplace dims t =
-  if is_sparse t then
-    None
-  else
-    Some (Dense.reshape_inplace dims t)
-
-let reshape dims t =
-    Dense.reshape_inplace dims @@ copy t
-
 let partial_blit = Sparse.partial_blit
 
 let%indexop.stringlike get m f = slice f m
 and set to_ filter from = partial_blit ~from ~to_ filter
+
+(** Full unsafe module *)
+module Unsafe = struct
+  include Unsafe_0
+  let reshape_inplace dims t =
+    if is_sparse t then
+      None
+    else
+      Some (Dense.reshape_inplace dims t)
+
+  let reshape dims t =
+    Dense.reshape_inplace dims @@ copy t
+
+end
+
 
 (** Scanning functions *)
 let for_all p x =

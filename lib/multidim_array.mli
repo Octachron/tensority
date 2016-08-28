@@ -53,7 +53,28 @@ module Unsafe : sig
       The function raises an [Dimension_error] exception if the physical size of [shape] is
       not the same as the length of [array].
   *)
-val create : 'a Shape.eq -> 'b array -> < elt : 'b; shape : 'a > t
+  val create : 'a Shape.eq -> 'b array -> < elt : 'b; shape : 'a > t
+
+(** Reshape function *)
+
+(** [reshape sh m] copy and reshape the function if the shape [sh]
+    is compatible with the shape [m.shape].
+    Raise a [Dimension_error] otherwise.
+    @todo Multiplication proof.
+*)
+val reshape: 'sh Shape.l -> < elt : 'e; shape : 'sh > t
+  -> < elt : 'e; shape : 'sh > t
+
+(** [reshape_inplace sh m] reinterpret the dense multidimensional array
+    [m] as an array of shape [sh]. The function returns [None] if the
+    [m] is not dense
+    Raise a [Dimension_error] otherwise.
+    @todo Multiplication proof.
+*)
+val reshape_inplace: 'sh Shape.l
+  -> < elt : 'e; shape : 'sh > t
+  -> < elt : 'e; shape : 'sh > t option
+
 end
 
 (** {2 Creation functions} *)
@@ -107,27 +128,6 @@ val partial_copy :
 val partial_blit :
   from:< elt : 'a; shape : 'b > t ->
   to_:< elt : 'a; shape : 'c > t -> ('c, 'b) Mask.t -> unit
-
-
-(** Reshape function *)
-
-(** [reshape sh m] copy and reshape the function if the shape [sh]
-    is compatible with the shape [m.shape].
-    Raise a [Dimension_error] otherwise.
-    @todo Multiplication proof.
-*)
-val reshape: 'sh Shape.l -> < elt : 'e; shape : 'sh > t
-  -> < elt : 'e; shape : 'sh > t
-
-(** [reshape_inplace sh m] reinterpret the dense multidimensional array
-    [m] as an array of shape [sh]. The function returns [None] if the
-    [m] is not dense
-    Raise a [Dimension_error] otherwise.
-    @todo Multiplication proof.
-*)
-val reshape_inplace: 'sh Shape.l
-  -> < elt : 'e; shape : 'sh > t
-  -> < elt : 'e; shape : 'sh > t option
 
 
 (** {2 Map, iter and fold functions} *)
