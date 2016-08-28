@@ -6,8 +6,8 @@ authors:"octachron <octa@polychoron.fr>"
 homepage: ""
 bug-reports: ""
 license: "GPL 3+"
-build: [[ "ocaml" "pkg/pkg.ml" "build"
- "--installer" "true" ]]
+build: ["ocaml" "pkg/pkg.ml" "build" "--pinned" pinned ]
+
 remove: ["ocamlfind" "remove" "tensority"]
 depends: [
 ocamlbuild {build} ocamlfind {build} topkg {build} ppx_indexop {build}

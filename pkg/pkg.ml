@@ -3,13 +3,11 @@
 #require "topkg"
 open Topkg
 
-let build = Pkg.build ~cmd:(fun c os ->
+let build = Pkg.build ~cmd:(fun c os files ->
   let ocamlbuild = Conf.tool "ocamlbuild" os in
   let build_dir = Conf.build_dir c in
-  Cmd.(ocamlbuild % "-use-ocamlfind" %
-       "-build-dir" % build_dir
-       )
-  ) ()
+  OS.Cmd.run @@ Cmd.(Pkg.build_cmd c os %% of_list files)
+   ) ()
 
 type namespace = { name:string; src: string}
 
