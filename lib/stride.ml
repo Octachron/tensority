@@ -5,25 +5,25 @@ let first s = s.(0)
 
 
 let create: ('n * 'sh) Shape.eq -> 'n t = fun sh ->
-  let s = Array.make (Shape.order sh) 0 in
+  let s = Array.make (1 + Shape.order sh) 0 in
   let rec fill: type sh. pos:int -> m:int -> sh Shape.eq -> unit =
     let open Shape in
     fun ~pos ~m -> function
       | a :: q -> Array.unsafe_set s pos m;
         fill ~pos:(pos+1) ~m:(m * Nat.to_int a) q
-      | [] -> () in
+      | [] -> Array.unsafe_set s pos m in
   fill ~pos:0 ~m:1 sh; s
 
 let create_2: ('n * 'sh) Shape.eq -> ('n2 * 'sh2) Shape.eq -> 'n t * 'n2 t =
   fun sh sh2 ->
-    let s = Array.make (Shape.order sh) 0 in
-    let s2 = Array.make (Shape.order sh2) 0 in
+    let s = Array.make (1+Shape.order sh) 0 in
+    let s2 = Array.make (1+Shape.order sh2) 0 in
   let rec fill: type sh. 'a t -> pos:int -> m:int -> sh Shape.eq -> int =
     let open Shape in
     fun s ~pos ~m -> function
       | a :: q -> Array.unsafe_set s pos m;
         fill s ~pos:(pos+1) ~m:(m * Nat.to_int a) q
-      | [] -> m in
+      | [] -> Array.unsafe_set s pos m; m in
   let m = fill s ~pos:0 ~m:1 sh in
   let _ = fill s2 ~pos:0 ~m sh2 in
   s, s2
