@@ -284,13 +284,13 @@ let rec repeat k ppf s = if k=0 then () else
     (Format.fprintf ppf "%s" s; repeat (k-1) ppf s)
 
 let pp elt_pp ppf ma =
-  let up _ = Format.fprintf ppf "@["
-  and down _ = Format.fprintf ppf "@]"
-  and sep = function
-    | 0 -> Format.fprintf ppf ",@ "
-    | 1 -> Format.fprintf ppf ";@,"
-    | 2 -> Format.fprintf ppf "@,;;@,"
-    | k -> Format.fprintf ppf "@,%a@," (repeat k) ";" in
+  let up k = Format.fprintf ppf "@[%s" (if k mod 2 = 0 then "[" else "" )
+  and down k = Format.fprintf ppf "%s@]" (if k mod 2 = 0 then "]" else "")
+  and sep k =
+    if k mod 2 = 0 then
+      Format.fprintf ppf ", "
+    else
+      Format.fprintf ppf "; " in
   let f sh = elt_pp ppf (ma.(sh)) in
   Format.fprintf ppf "@[("
   ; Shape.iter_sep ~up ~down ~sep ~f ma.shape

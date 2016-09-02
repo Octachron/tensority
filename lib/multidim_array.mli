@@ -166,7 +166,7 @@ val map2 :
 (** [iter f m] computes [f e] for every elements of [m] *)
 val iter : ('a -> unit) -> < elt : 'a; shape : 'b > t -> unit
 
-(** [iter f m] computes [f e] for every elements of [m] *)
+(** [iter2 f m n] computes [f e_1 e_2] for every elements of [m] and [n] *)
 val iter2 : ('a -> 'b -> unit) -> < elt : 'a; shape : 'sh > t ->
   <elt:'b; shape:'sh> t -> unit
 
