@@ -421,7 +421,7 @@ let index_assign kont mapper =
     [%expr [%e a].[[%e i]]<- [%e v] ][@metaloc e.pexp_loc]
   | [%expr [%e? a].( [%e? i] ) <- [%e? v] ] as e ->
     let a,i, v = map a i v in
-    [%expr [%e a].[[%e i]]<- [%e v] ][@metaloc e.pexp_loc]
+    [%expr [%e a].([%e i])<- [%e v] ][@metaloc e.pexp_loc]
   | e -> kont mapper e
 
 let const_mapper kont mapper = function
