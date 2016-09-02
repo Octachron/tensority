@@ -1,5 +1,5 @@
 opam-version: "1.2"
-name: "tensority-"
+name: "tensority"
 version: "0.1"
 maintainer: "octachron <octa@polychoron.fr>"
 authors:"octachron <octa@polychoron.fr>"
