@@ -14,7 +14,7 @@ let t = [%array 4
       ]
 ]
 
-let mat = t.[ 1j, 2j, All, All ]
+let mat = t.[ 1j, 1j, All, All ]
 let k = mat.[0j, 1j]
 
 let w = [%array (0, 2) ]

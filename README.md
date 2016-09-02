@@ -45,7 +45,7 @@ let array4 = [%array 4
 let array = init_sh [502103s] (function [k] -> Nat.to_int k)
 
 (* accessing an element *)
-let one = array4.( 1i, 2i, 0i, 1i ) ;;
+let one = array4.( 1i, 0i, 0i, 0i ) ;;
 
 (* accessing an element with an out-of-bound type error *)
 let one = array4.( 1i, 5i, 0i, 1i ) ;;
@@ -54,12 +54,12 @@ let one = array4.( 1i, 5i, 0i, 1i ) ;;
 array4.(0i,0i,0i,0i) <- 0;;
 
 (* slicing *)
-let matrix = array4.[ 1j, 2j, All, All ];;
+let matrix = array4.[ All, All, 1j, 1j ];;
 (* matrix is [9, 1; 2, 3] *)
 
 (* slice assignment *)
 let row = [%array (2,3) ];;
-matrix.[0j, All] <- row
+matrix.[All, 0j] <- row;;
 (* matrix is now [2, 3; 2, 3] *)
 
 (* range slice *)
@@ -82,7 +82,7 @@ open Shape
 open Nat_defs
 
 (* Multidimensional array literals *)
-let array4 = Unsafe.create [ _3; _2; _2 ]
+let array4 = Unsafe.create [ _2; _2; _3; _2 ]
 [| 1; 2; 3; 4; 5; 6; 7; 8; 9; 10; 11; 12;
    1; 2; 8; 9; 9; 1; 2; 3; 19; 12; 14; 17
 |]
@@ -92,7 +92,7 @@ let array = init_sh Size.[nat _5 @ _0 @ _2 @ _1 @ _0 @ _3n]
   (function [k] -> Nat.to_int k)
 
 (* accessing an element *)
-let one = array4.( [ _1i; _2i; _0i; _1i] ) ;;
+let one = array4.( [ _1i; _0i; _0i; _0i] ) ;;
 
 (* accessing an element with an out-of-bound type error *)
 let one = array4.([ _1i; _5i; _0i; _1i ] ) ;;
@@ -101,12 +101,12 @@ let one = array4.([ _1i; _5i; _0i; _1i ] ) ;;
 array4.([ _0i; _0i; _0i; _0i ]) <- 0;;
 
 (* slicing *)
-let matrix = array4.[[ Elt _1i, Elt _2i, All, All ]];;
+let matrix = array4.[[ All; All; Elt _1i;  Elt _1i ]];;
 (* matrix is [9, 1; 2, 3] *)
 
 (* slice assignment *)
-let row = Unsafe.create [_2] [| 2,3 |];;
-matrix.[[ Elt _0i, All]] <- row
+let row = Unsafe.create [_2] [| 2; 3 |];;
+matrix.[[ All; Elt _0i]] <- row
 (* matrix is now [2, 3; 2, 3] *)
 
 (* range slice *)

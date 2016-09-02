@@ -342,16 +342,36 @@ module Array_lit = struct
     match n.txt with
     | Elt e -> e :: l
     | Nested(a, q) ->
-      flatten_nested a@@
+      flatten_nested a @@
       List.fold_right flatten_nested q l
 
+  let transpose sh l =
+    let a = Array.of_list l in
+    let a' = Array.make (Array.length a) a.(0) in
+    let sh' = List.rev sh in
+    let rec pos l k = match l, k with
+      | [], [] -> 0
+      | n :: q, p :: qp -> p + n * pos q qp
+      | _ -> raise (Invalid_argument "transpose") in
+    let rec shape_iter f = function
+      | [] -> f []
+      | a :: q ->
+        for i = 0 to a - 1 do
+          shape_iter (fun l -> f (i::l) ) q done
+    in
+    let () = (* do the transposition *)
+    shape_iter (fun k ->
+        a'.(pos sh' (List.rev k) ) <- a.(pos sh k)
+      )
+    sh in
+    Array.to_list a'
 
   let array loc level e =
     let kind = ma in
     let nested = extract_nested kind loc level e in
     let shape_int = compute_and_check_shape kind loc level nested in
     let l = flatten_nested nested [] in
-    let shape = Expr.to_list loc @@ List.map (Ints.Eq.nat loc) shape_int in
+    let shape = Expr.to_list loc @@ List.rev_map (Ints.Eq.nat loc) shape_int in
     let array = H.Exp.array ~loc l in
     [%expr [%e kind.fn] [%e shape] [%e array] ]
 
@@ -372,7 +392,7 @@ module Array_lit = struct
     let shape_int = compute_and_check_shape kind loc level nested in
     let l = flatten_nested nested [] in
     let contr, cov  = split contr shape_int in
-    let shape l = Expr.to_list loc @@ List.map (Ints.Eq.nat loc) l in
+    let shape l = Expr.to_list loc @@ List.rev_map (Ints.Eq.nat loc) l in
     let array = H.Exp.array ~loc l in
     [%expr [%e kind.fn] ~contr:[%e shape contr] ~cov:[%e shape cov] [%e array] ]
 
@@ -407,7 +427,7 @@ let index_access kont mapper =
   | [%expr [%e? a].[ [%e? i] ] ] as e ->
     let a, i = map a i in
     [%expr [%e a].[ Tensority.Mask.( [%e i] )] ][@metaloc e.pexp_loc]
-  | [%expr [%e? a].([%e? i] ) ] as e ->
+  | [%expr [%e? a].([%e? i]) ] as e ->
     let a, i = map a i in
     [%expr [%e a].( Tensority.Shape.( [%e i] ) ) ][@metaloc e.pexp_loc]
   | e -> kont mapper e
@@ -419,9 +439,9 @@ let index_assign kont mapper =
   | [%expr [%e? a].[[%e? i] ] <- [%e? v] ] as e ->
     let a,i, v = map a i v in
     [%expr [%e a].[Tensority.Mask.([%e i])]<- [%e v] ][@metaloc e.pexp_loc]
-  | [%expr [%e? a].(Tensority.Shape.( [%e? i] ) ) <- [%e? v] ] as e ->
+  | [%expr [%e? a].([%e? i]) <- [%e? v] ] as e ->
     let a,i, v = map a i v in
-    [%expr [%e a].([%e i])<- [%e v] ][@metaloc e.pexp_loc]
+    [%expr [%e a].(Tensority.Shape.([%e i]))<- [%e v] ][@metaloc e.pexp_loc]
   | e -> kont mapper e
 
 let const_mapper kont mapper = function
