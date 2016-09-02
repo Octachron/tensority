@@ -77,7 +77,7 @@ let rec iter_extended_dual: type sh sh'.
   fun f sh mask ->
     let open Shape in
     match mask, sh with
-    | [], [] -> ()
+    | [], [] -> f [] []
     | Elt a :: mask, _ ->
       iter_extended_dual (fun sh sh' -> f sh (a :: sh') ) sh mask
     | All :: mask, a :: sh ->
@@ -97,7 +97,7 @@ let rec iter_masked_dual: type sh sh'.
   fun f sh mask ->
     let open Shape in
     match mask, sh with
-    | [], [] -> ()
+    | [], [] -> f [] []
     | Elt a :: mask,  _ :: sh ->
       iter_masked_dual (fun sh sh' -> f (a :: sh) sh' ) sh mask
     | All :: mask, a :: sh ->

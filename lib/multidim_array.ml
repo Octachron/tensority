@@ -150,10 +150,11 @@ module Sparse = struct
 
   let partial_blit: from:<shape:'sh2; elt:'a> t -> to_:<shape:'sh;elt:'a> t
   -> ('sh,'sh2) Mask.t -> unit =
-  fun ~from ~to_ filter ->
-    Mask.iter_masked_dual
-      (fun sh sh' -> to_.(sh) <- from.(sh') )
-      to_.shape filter
+    fun ~from ~to_ filter ->
+    Mask.iter_extended_dual
+      (fun sh sh' ->
+         to_.(sh') <- from.(sh) )
+      from.shape filter
 
   let iter_sh f m =
     Shape.iter (fun sh -> f sh m.(sh)) m.shape

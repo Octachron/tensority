@@ -406,10 +406,10 @@ let index_access kont mapper =
   function
   | [%expr [%e? a].[ [%e? i] ] ] as e ->
     let a, i = map a i in
-    [%expr [%e a].[ [%e i]] ][@metaloc e.pexp_loc]
-  | [%expr [%e? a].( [%e? i] ) ] as e ->
+    [%expr [%e a].[ Tensority.Mask.( [%e i] )] ][@metaloc e.pexp_loc]
+  | [%expr [%e? a].([%e? i] ) ] as e ->
     let a, i = map a i in
-    [%expr [%e a].( [%e i] ) ][@metaloc e.pexp_loc]
+    [%expr [%e a].( Tensority.Shape.( [%e i] ) ) ][@metaloc e.pexp_loc]
   | e -> kont mapper e
 
 let index_assign kont mapper =
@@ -418,8 +418,8 @@ let index_assign kont mapper =
   function
   | [%expr [%e? a].[[%e? i] ] <- [%e? v] ] as e ->
     let a,i, v = map a i v in
-    [%expr [%e a].[[%e i]]<- [%e v] ][@metaloc e.pexp_loc]
-  | [%expr [%e? a].( [%e? i] ) <- [%e? v] ] as e ->
+    [%expr [%e a].[Tensority.Mask.([%e i])]<- [%e v] ][@metaloc e.pexp_loc]
+  | [%expr [%e? a].(Tensority.Shape.( [%e? i] ) ) <- [%e? v] ] as e ->
     let a,i, v = map a i v in
     [%expr [%e a].([%e i])<- [%e v] ][@metaloc e.pexp_loc]
   | e -> kont mapper e
