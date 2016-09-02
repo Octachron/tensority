@@ -1,7 +1,7 @@
 (*#require "tensority-light";;
 #require "ppx_listlike";;
 *)
-
+open Shape
 open Multidim_array
 
 let m = init_sh [253s; 253s] Shape.( function [k; l] ->

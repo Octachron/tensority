@@ -59,13 +59,13 @@ let matrix = array4.[ 1j, 2j, All, All ];;
 
 (* slice assignment *)
 let row = [%array (2,3) ];;
-matrix.[0i, All] <- row
+matrix.[0j, All] <- row
 (* matrix is now [2, 3; 2, 3] *)
 
 (* range slice *)
 let array' = array.[[%range 25 50 ~by:5]]
 (* or *)
-let array' = array.[ 25 #-># 50 #/# 5]
+let array' = array.[ 25 #-># 50 ## 5]
 
 
 ```

@@ -383,7 +383,7 @@ open Ast_mapper
 
 let range loc ?by start stop =
   let int = expect_int "range" in
-  let start = int start and stop = 1 + int stop in
+  let start = int start and stop = int stop in
   let step = match by with Some step -> int step | None -> 1 in
   if stop < start then
     error loc "[%%range]: invalid argument start indice %d > stop indice %d"

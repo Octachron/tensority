@@ -33,8 +33,9 @@ let rec filter_scan:
   type sh sh2. _ t -> _ t -> pos_in:int -> pos_out:int ->
   (sh, sh2) Mask.t -> int =
   let open Mask in
-  fun s s' ~pos_in ~pos_out m -> match m with
-    | [] -> 0
+  fun s s' ~pos_in ~pos_out m ->
+    match m with
+    | [] -> s'.(pos_out) <- s.(pos_in); 0
     | All :: q ->
       s'.(pos_out) <- s.(pos_in);
       filter_scan s s' ~pos_in:(succ pos_in) ~pos_out:(succ pos_out) q
@@ -48,7 +49,7 @@ let rec filter_scan:
 
 let filter: 'n t -> ('n * _, 'n2 * _ ) Mask.t -> int * 'n2 t =
   fun s m ->
-    let s' = Array.make 1 (Mask.order_out m) in
+    let s' = Array.make (1 + Mask.order_out m) 1 in
     let offset = filter_scan s s' ~pos_in:0 ~pos_out:0 m in
     offset, s'
 
