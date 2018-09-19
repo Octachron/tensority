@@ -24,13 +24,13 @@ val ( ~+ ): int -> t
 val ( ~* ): int -> t
 
 (** Stencil enumeration [ s.[n] ] is the n-th integer within s *)
-val get: t -> int -> int [@@indexop.stringlike]
+val ( .%[] ): t -> int -> int
 
 (** [first s] ≡ s.[0] *)
 val first: t -> int
 
 (** Stencil composition: [ s_1 % s_2 ] is the stencil such that
-    [ (s_1 % s_2).[n] = s_1.[ s_2.[n] ] *)
+    [ (s_1 % s_2).[n] = s_1.[ s_2.[n] ] ] *)
 val (%): t -> t -> t
 
 (** The stencil [s] = ℕ *)

@@ -19,32 +19,10 @@ val shape : < elt : 'a; shape : 'b > t -> 'b Shape.l
 val is_sparse : < elt : 'a; shape : 'b > t -> bool
 
 (** {2 Generic indexing operators} *)
-val get: < elt : 'elt; shape : 'sh > t -> 'sh Shape.lt -> 'elt
-  [@@indexop.arraylike]
+val (.%()): < elt : 'elt; shape : 'sh > t -> 'sh Shape.lt -> 'elt
 
-val set: < elt : 'elt; shape : 'sh > t -> 'sh Shape.lt -> 'elt -> unit
-  [@@indexop.arraylike]
+val (.%()<-): < elt : 'elt; shape : 'sh > t -> 'sh Shape.lt -> 'elt -> unit
 
-(** {2 Specialized indexing operators, for arrays of dimension 1 to 3} *)
-val get_1 :
-  < elt : 'elt; shape : 'nat Shape.single > t -> 'nat Nat.lt -> 'elt
-  [@@indexop]
-val get_2: < elt : 'elt; shape : ('a, 'b) Shape.pair > t ->
-  'a Nat.lt -> 'b Nat.lt -> 'elt
-  [@@indexop]
-val get_3: < elt : 'elt; shape : ('a, 'b, 'c) Shape.triple > t ->
-  'a Nat.lt -> 'b Nat.lt -> 'c Nat.lt -> 'elt
-  [@@indexop]
-
-val set_1 :
-  < elt : 'elt; shape : 'nat Shape.single > t -> 'nat Nat.lt -> 'elt -> unit
-  [@@indexop]
-val set_2: < elt : 'elt; shape : ('a, 'b) Shape.pair > t ->
-  'a Nat.lt -> 'b Nat.lt -> 'elt -> unit
-  [@@indexop]
-val set_3: < elt : 'elt; shape : ('a, 'b, 'c) Shape.triple > t ->
-  'a Nat.lt -> 'b Nat.lt -> 'c Nat.lt -> 'elt -> unit
-  [@@indexop]
 
 (** {2 Unsafe functions} *)
 module Unsafe : sig
@@ -108,15 +86,13 @@ val slice :
   < elt : 'c; shape : 'a > t -> < elt : 'c; shape : 'b > t
 
 (** {2 Slicing indexing operators} *)
-val set:
+val (.%[]<-):
   < elt : 'a; shape : 'b > t ->
   ('b, 'c) Mask.t -> < elt : 'a; shape : 'c > t -> unit
-  [@@indexop.stringlike]
 
-val get :
+val (.%[]) :
   < elt : 'a; shape : 'b > t ->
   ('b, 'c) Mask.t -> < elt : 'a; shape : 'c > t
-  [@@indexop.stringlike]
 
 (** [partial_copy filter m] creates a fresh copy of the slice [slice filter m] *)
 val partial_copy :

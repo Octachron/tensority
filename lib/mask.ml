@@ -131,6 +131,7 @@ let rec join: type li lm lo ni nm no.
 
 let (>>) = join
 
+[@@@warning "-32"]
 let rec position_gen:
   type sh filt.
   mult:int -> sum:int
@@ -151,6 +152,8 @@ let rec position_gen:
     position_gen ~sum:(sum + mult * Nat.to_int nat)
       ~mult:(Nat.to_int dim * mult) filter shape indices
   | [], [], _ -> mult, sum
+
+[@@@warning "+32"]
 
 let pp ppf shape =
   let rec inner: type sh.  Format.formatter ->  sh list -> unit =

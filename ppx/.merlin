@@ -1,2 +1,34 @@
-REC
-PKG compiler-libs.common ppx_tools.metaquot
+B /home/reflet/.opam/4.07.0/lib/base
+B /home/reflet/.opam/4.07.0/lib/base/caml
+B /home/reflet/.opam/4.07.0/lib/base/shadow_stdlib
+B /home/reflet/.opam/4.07.0/lib/ocaml-compiler-libs/common
+B /home/reflet/.opam/4.07.0/lib/ocaml-compiler-libs/shadow
+B /home/reflet/.opam/4.07.0/lib/ocaml-migrate-parsetree
+B /home/reflet/.opam/4.07.0/lib/ocaml/compiler-libs
+B /home/reflet/.opam/4.07.0/lib/ppx_derivers
+B /home/reflet/.opam/4.07.0/lib/ppxlib
+B /home/reflet/.opam/4.07.0/lib/ppxlib/ast
+B /home/reflet/.opam/4.07.0/lib/ppxlib/print_diff
+B /home/reflet/.opam/4.07.0/lib/ppxlib/traverse_builtins
+B /home/reflet/.opam/4.07.0/lib/result
+B /home/reflet/.opam/4.07.0/lib/sexplib0
+B /home/reflet/.opam/4.07.0/lib/stdio
+B ../_build/default/ppx/.tensority_ppx.objs
+S /home/reflet/.opam/4.07.0/lib/base
+S /home/reflet/.opam/4.07.0/lib/base/caml
+S /home/reflet/.opam/4.07.0/lib/base/shadow_stdlib
+S /home/reflet/.opam/4.07.0/lib/ocaml-compiler-libs/common
+S /home/reflet/.opam/4.07.0/lib/ocaml-compiler-libs/shadow
+S /home/reflet/.opam/4.07.0/lib/ocaml-migrate-parsetree
+S /home/reflet/.opam/4.07.0/lib/ocaml/compiler-libs
+S /home/reflet/.opam/4.07.0/lib/ppx_derivers
+S /home/reflet/.opam/4.07.0/lib/ppxlib
+S /home/reflet/.opam/4.07.0/lib/ppxlib/ast
+S /home/reflet/.opam/4.07.0/lib/ppxlib/print_diff
+S /home/reflet/.opam/4.07.0/lib/ppxlib/traverse_builtins
+S /home/reflet/.opam/4.07.0/lib/result
+S /home/reflet/.opam/4.07.0/lib/sexplib0
+S /home/reflet/.opam/4.07.0/lib/stdio
+S .
+FLG -ppx '/home/ombre/Projets/Ocaml/tensority/_build/default/.ppx/ppxlib.metaquot/ppx.exe --as-ppx --cookie '\''library-name="tensority_ppx"'\'''
+FLG -open Tensority_ppx -w @a-4-29-40-41-42-44-45-48-58-59-60-40 -strict-sequence -strict-formats -short-paths -keep-locs

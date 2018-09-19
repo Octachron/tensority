@@ -1,0 +1,6 @@
+_build/*
+*~
+setup.*
+Makefile
+configure
+src/META

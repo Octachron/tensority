@@ -9,9 +9,6 @@ val const: 'a Nat.eq -> float -> 'a t
 val zero: 'a Nat.eq -> 'a t
 val pad_right: 'a Nat.eq -> float array -> 'a t
 
-val get : 'a t -> 'a Nat.lt -> float
-val set : 'a t -> 'a Nat.lt -> float -> unit
-
 val dim : 'a t -> int
 val typed_dim : 'a t -> 'a Nat.eq
 

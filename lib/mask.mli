@@ -91,7 +91,7 @@ type ('a, 'b) s_to_eq = ('a,'b, [`Lt] * [`Eq] ) gen_s
 type ('a, 'b) s = ('a, 'b) s_to_eq
 type ('a, 'b) t = ('a, 'b) s
 
-(** {2 Functions *)
+(** {2 Functions } *)
 
 
 val order_in: 'sh list -> int

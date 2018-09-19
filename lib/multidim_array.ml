@@ -1,8 +1,7 @@
 module A = Array
 exception Dimension_error = Signatures.Dimension_error
-let (%) a n x = A.unsafe_set a n x
-let (=:) = (@@)
-let (@?) a n = A.unsafe_get a n
+
+let (.!()) = Array.unsafe_get
 
 type 'x t = {
   shape: ('n * 'sh) Shape.l;
@@ -30,44 +29,14 @@ let position (m:<shape:'sh;elt:'elt> t) (indices:'sh Shape.lt) =
       m.offset + Stride.position ~strides:m.strides ~indices
 
 
-[%%indexop.arraylike
-  let get: <shape:'sh; elt:'elt> t -> 'sh Shape.lt -> 'elt = fun t indices ->
-    t.array @? position t indices
+let ( .%() ):
+  <shape:'sh; elt:'elt> t -> 'sh Shape.lt -> 'elt = fun t indices ->
+    t.array.!(position t indices)
 
-  let set: <shape:'sh; elt:'elt> t -> 'sh Shape.lt -> 'elt -> unit =
+let ( .%() <- ): <shape:'sh; elt:'elt> t -> 'sh Shape.lt -> 'elt -> unit =
     fun t indices value ->
     let p = position t indices in
     A.unsafe_set t.array p value
-]
-
-[%%indexop
-  let get_1: type nat. <shape:nat Shape.single; elt:'elt> t
-    -> nat Nat.lt -> 'elt = fun t nat ->
-    t.([nat])
-
-  let get_2: type a b. <shape: (a,b) Shape.pair; elt:'elt> t
-    -> a Nat.lt -> b Nat.lt -> 'elt = fun t i j ->
-    t.([i;j])
-
-  let get_3: type a b c. <shape: (a,b,c) Shape.triple; elt:'elt> t
-    -> a Nat.lt -> b Nat.lt -> c Nat.lt -> 'elt = fun t i j k ->
-    t.([i;j;k])
-
-
-  let set_1: type nat. <shape:nat Shape.single; elt:'elt> t
-      -> nat Nat.lt -> 'elt -> unit = fun t i x ->
-    t.([i])<- x
-
-    let set_2: type a b. <shape: (a,b) Shape.pair; elt:'elt> t
-    -> a Nat.lt -> b Nat.lt -> 'elt -> unit = fun t i j x ->
-      let open Shape in
-      t.([i;j])<- x
-
-  let set_3: type a b c. <shape: (a,b,c) Shape.triple; elt:'elt> t
-    -> a Nat.lt -> b Nat.lt -> c Nat.lt -> 'elt -> unit = fun t i j k x ->
-    let open Shape in
-    t.([i;j;k])<- x
-]
 
 
 let physical_size t = A.length t.array
@@ -80,7 +49,7 @@ let init_sh shape f =
   let z = Shape.zero shape in
   let array = A.make size @@ f z in
   let m = {shape; array; strides; offset = 0 } in
-  Shape.iter_on shape (fun sh -> m.(sh) <- f sh);
+  Shape.iter_on shape (fun sh -> m.%(sh) <- f sh);
   m
 
 
@@ -112,7 +81,7 @@ let map f m =
 
 let map2 f (m: <shape:'sh; elt:'a > t) (m2: <shape:'sh; elt:'b > t) =
   let array = A.init (physical_size m)
-      (fun i -> f (m.array @? i) (m2.array @? i) ) in
+      (fun i -> f m.array.!(i) m2.array.!(i)) in
   { m with array }
 
 let iter f m =
@@ -144,8 +113,8 @@ module Sparse = struct
     if size = 0 then
       Unsafe_0.create shape [| |]
     else
-      let m' = Unsafe_0.create shape @@ A.make size (m.array @? 0) in
-      Shape.iter_on m.shape (fun sh -> m'.(sh) <- deep_copy m.(sh))
+      let m' = Unsafe_0.create shape @@ A.make size m.array.!(0) in
+      Shape.iter_on m.shape (fun sh -> m'.%(sh) <- deep_copy m.%(sh))
     ; m'
 
   let partial_blit: from:<shape:'sh2; elt:'a> t -> to_:<shape:'sh;elt:'a> t
@@ -153,36 +122,36 @@ module Sparse = struct
     fun ~from ~to_ filter ->
     Mask.iter_extended_dual
       (fun sh sh' ->
-         to_.(sh') <- from.(sh) )
+         to_.%(sh') <- from.%(sh) )
       from.shape filter
 
   let iter_sh f m =
-    Shape.iter (fun sh -> f sh m.(sh)) m.shape
+    Shape.iter (fun sh -> f sh m.%(sh)) m.shape
 
   let map_sh f m  =
-      init_sh m.shape (fun sh -> f sh m.(sh) )
+      init_sh m.shape (fun sh -> f sh m.%(sh) )
 
   let blit: from:'sh t -> to_:'sh t -> unit =
     fun ~from ~to_ ->
       Shape.iter_on from.shape (fun sh ->
-          to_.(sh) <- from.(sh)
+          to_.%(sh) <- from.%(sh)
         )
 
   let map f m =
-    init_sh m.shape (fun sh -> f m.(sh) )
+    init_sh m.shape (fun sh -> f m.%(sh) )
 
   let map2 f (m: <shape:'sh; elt:'a > t) (m2: <shape:'sh; elt:'b > t) =
-    init_sh m.shape (fun sh -> f m.(sh) m2.(sh) )
+    init_sh m.shape (fun sh -> f m.%(sh) m2.%(sh) )
 
   let iter f m =
-    Shape.iter_on m.shape (fun sh -> f m.(sh) )
+    Shape.iter_on m.shape (fun sh -> f m.%(sh) )
 
   let iter2 f m n =
-    Shape.iter_on m.shape (fun sh -> f m.(sh) n.(sh) )
+    Shape.iter_on m.shape (fun sh -> f m.%(sh) n.%(sh) )
 
   let fold_all_left f acc m =
     let acc =ref acc in
-    Shape.iter_on m.shape (fun sh ->  acc := f !acc m.(sh))
+    Shape.iter_on m.shape (fun sh ->  acc := f !acc m.%(sh))
   ; !acc
 
   end
@@ -242,8 +211,8 @@ let partial_copy ?(deep_copy=fun x -> x) s m =
 
 let partial_blit = Sparse.partial_blit
 
-let%indexop.stringlike get m f = slice f m
-and set to_ filter from = partial_blit ~from ~to_ filter
+let ( .%[] ) m f = slice f m
+and ( .%[]<- ) to_ filter from = partial_blit ~from ~to_ filter
 
 (** Full unsafe module *)
 module Unsafe = struct
@@ -276,13 +245,13 @@ let memq x m =
 
 let find predicate ma =
   Shape.fold_left (fun l sh ->
-      let x = ma.(sh) in
+      let x = ma.%(sh) in
       if predicate x then sh :: l else l
     ) [] ma.shape
 
 
-let rec repeat k ppf s = if k=0 then () else
-    (Format.fprintf ppf "%s" s; repeat (k-1) ppf s)
+let rec _repeat k ppf s = if k=0 then () else
+    (Format.fprintf ppf "%s" s; _repeat (k-1) ppf s)
 
 let pp elt_pp ppf ma =
   let up k = Format.fprintf ppf "@[%s" (if k mod 2 = 0 then "[" else "" )
@@ -292,7 +261,7 @@ let pp elt_pp ppf ma =
       Format.fprintf ppf ", "
     else
       Format.fprintf ppf "; " in
-  let f sh = elt_pp ppf (ma.(sh)) in
+  let f sh = elt_pp ppf (ma.%(sh)) in
   Format.fprintf ppf "@[("
   ; Shape.iter_sep ~up ~down ~sep ~f ma.shape
   ; Format.fprintf ppf ")@]"

@@ -121,6 +121,9 @@ val fold_on: 'b eq -> 'a -> ('a -> 'b lt -> 'a) -> 'a
 val partial_fold :
   start:int -> stop:'a eq -> acc:'acc -> ('acc -> 'a lt -> 'acc) -> 'acc
 
+(** {3 Random generator }*)
+val rand: Random.State.t -> 'n eq -> 'n lt
+
 (** {2 Extended proofs } *)
 type truth = Truth
 

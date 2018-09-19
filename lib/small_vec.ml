@@ -69,7 +69,7 @@ let ( |*| ) = scalar_prod
 let ( *. ) scalar vec = A.map ( ( *. ) scalar ) vec
 let ( /. ) vec scalar = A.map (fun x -> x /. scalar ) vec
 let (~-) v = A.map ( ~-.) v
-let%indexop.arraylike get = get and set = set
+let ( .%() ) = get and ( .%() <- ) = set
 end
 
 let prenorm v = Operators.( v |*| v )

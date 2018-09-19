@@ -72,7 +72,7 @@ let diag v =
   let dim = Small_vec.typed_dim v in
   let n = Nat.to_int dim in
   let a = Array.make (n * n) 0. in
-  Nat.iter_on dim ( fun k -> a % (Nat.to_int k * n) =: Small_vec.( v.(k) ) ) ;
+  Nat.iter_on dim ( fun k -> a % (Nat.to_int k * n) =: Small_vec.( v.%(k) ) ) ;
   create dim dim a
 
 let id dim = square dim init delta
@@ -103,7 +103,7 @@ module Operators = struct
       let pos = ref 0 in
       Nat.iter_on (Small_vec.typed_dim v) (fun k ->
         for i = 0 to l - 1 do
-          array % i =: (array @? i) +. m.array.(!pos) *. Small_vec.(v.(k));
+          array % i =: (array @? i) +. m.array.(!pos) *. Small_vec.(v.%(k));
           incr pos
         done
         )
@@ -148,7 +148,7 @@ module Operators = struct
   let ( /. ) m scalar =
     { m with array =  A.map (fun x -> x /. scalar ) m.array }
 
-  let%indexop.arraylike get m (x,y) = get m x y and set m (x,y) = set m x y
+  let (.%()) m (x,y) = get m x y and ( .% () <- ) m (x,y) = set m x y
 end
 
 include Operators

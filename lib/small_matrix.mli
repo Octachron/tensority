@@ -6,9 +6,6 @@ val create : 'a Nat.eq -> 'b Nat.eq -> float array -> ('a * 'b) t
 val init : 'a Nat.eq -> 'b Nat.eq -> (int -> int -> float) -> ('a * 'b) t
 val square : 'a -> ('a -> 'a -> 'b) -> 'b
 
-val get : ('a * 'b) t -> 'a Nat.lt -> 'b Nat.lt -> float
-val set : ('a * 'b) t -> 'a Nat.lt -> 'b Nat.lt -> float -> unit
-
 val dims : ('a * 'b) t -> int * int
 val typed_dims : ('a * 'b) t -> 'a Nat.eq * 'b Nat.eq
 val size : ('a * 'b) t -> int

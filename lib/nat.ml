@@ -35,6 +35,7 @@ let succ nat = succ @@ to_int nat
 (* Functor for dynamic natural *)
 module type dynamic = sig type t val dim: t eq end
 module Dynamic(D: sig val dim: int end)= struct
+  [@@@warning "-37"]
   type t = private T
   let dim: t eq = Unsafe.create D.dim
 end
@@ -86,6 +87,10 @@ let partial_fold
   let acc = ref acc in
   partial_iter  ~start ~stop (fun i -> acc := f !acc i);
   !acc
+
+(* Random generator *)
+let rand state (n: 'a eq) :'a lt =
+  Unsafe.create @@ Random.State.int state @@ to_int n
 
 (* Predicate generators *)
 type truth = Truth

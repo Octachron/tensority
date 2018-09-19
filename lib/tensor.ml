@@ -1,8 +1,7 @@
 module MA = Multidim_array
 module A=Array
-let (@?) = A.unsafe_get
-let (%) = A.unsafe_set
-let (=:) = (@@)
+let (.!()) = A.unsafe_get
+let (.!()<-) = A.unsafe_set
 
 
 type 'x t =  { contr:('n * 'a) Shape.eq
@@ -28,20 +27,19 @@ let create ~contr ~cov array =
 
 end
 
-[%%indexop.arraylike
-  let get: <contr:'a; cov:'b> t -> ('a Shape.lt * 'b Shape.lt ) -> float = fun t
-    (contr,cov) ->
+let (.%()): <contr:'a; cov:'b> t -> ('a Shape.lt * 'b Shape.lt ) -> float =
+  fun t (contr,cov) ->
+  let p =
+    t.offset + Stride.position_2 t.strides contr cov in
+  t.array.!(p)
+
+
+let (.%()<-):
+  < contr:'a; cov:'b > t -> ('a Shape.lt * 'b Shape.lt ) -> float -> unit
+  = fun t (contr,cov) value ->
     let p =
       t.offset + Stride.position_2 t.strides contr cov in
-    t.array @? p
-
-
-  let set: < contr:'a; cov:'b > t -> ('a Shape.lt * 'b Shape.lt ) -> float -> unit
-    = fun t (contr,cov) value ->
-      let p =
-        t.offset + Stride.position_2 t.strides contr cov in
-    t.array % p =: value
-]
+    t.array.!(p) <- value
 
 
 let cov_size t = Shape.size t.cov
@@ -65,7 +63,7 @@ let init_sh f ~contr ~cov =
   let r = zero ~contr ~cov in
   Shape.iter_on contr ( fun contr ->
       Shape.iter_on cov ( fun cov ->
-          r.(contr,cov) <- f contr cov
+          r.%(contr,cov) <- f contr cov
         )
     )
 ; r
@@ -83,7 +81,7 @@ let pp ppf t =
   let pp_scalar ppf x= Format.fprintf ppf "%f" x in
   let pp_cov ppf t contr  =
     Shape.iter_sep ~up ~down ~sep:(sep ppf) t.cov ~f:(fun cov ->
-        pp_scalar ppf t.(contr,cov)
+        pp_scalar ppf t.%(contr,cov)
       ) in
   let pp_array ppf t =
     Shape.iter_sep ~up ~down
@@ -112,7 +110,7 @@ let matrix dim_row dim_col f: ('a,'b) matrix =
   let () = (*init*)
     Nat.iter_on dim_row (fun i ->
         Nat.iter_on dim_col (fun j ->
-            array % !pos =: f i j
+            array.!(!pos) <- f i j
           ; incr pos
           )
       ) in
@@ -123,32 +121,6 @@ let sq_matrix dim f = matrix dim dim f
 let vector (dim:'a Nat.eq) f :' a vec=
   Unsafe.create ~contr:[dim] ~cov:[] @@ Nat.map f dim
 
-;; [%%indexop
-let get_1: 'a vec -> 'a Nat.lt -> float = fun t n ->
-  t.([n],[])
-
-let set_1: 'a vec -> 'a Nat.lt -> float -> unit =
-  fun t n x -> t.([n],[]) <- x
-
-let get_2: ('a,'b) matrix -> 'a Nat.lt -> 'b Nat.lt -> float =
-  fun t n m -> t.([n],[m])
-
-let set_2: ('a,'b) matrix -> 'a Nat.lt -> 'b Nat.lt -> float -> unit =
-  fun t n m x -> t.([n],[m]) <- x
-
-
-let get_3: ('a,'b,'c) t3 -> 'a Nat.lt -> 'b Nat.lt -> 'c Nat.lt -> float =
-  fun t k l m -> t.([k;l],[m])
-
-let set_3:
-  ('a,'b,'c) t3
-  -> 'a Nat.lt -> 'b Nat.lt -> 'c Nat.lt
-  -> float
-  -> unit =
-  fun t k l m x -> t.([k;l],[m]) <- x
-]
-
-;;
 
 let delta i j = if Nat.to_int i = Nat.to_int j then 1. else 0.
 let id dim = sq_matrix dim delta
@@ -168,7 +140,7 @@ module Sparse = struct
     let tt = zero ~cov:t.contr ~contr:t.cov in
     Shape.iter_on t.contr ( fun contr ->
         Shape.iter_on t.cov ( fun cov ->
-            tt.(cov,contr) <- t.(contr,cov)
+            tt.%(cov,contr) <- t.%(contr,cov)
           )
       )
   ; tt
@@ -178,7 +150,7 @@ module Sparse = struct
     Shape.iter_on t1.contr (fun i ->
         Shape.iter_on t1.cov (fun k ->
             Shape.iter_on t2.cov ( fun j ->
-                r.(i,j)<- r.(i,j) +. t1.(i,k) *. t2.(k,j)
+                r.%(i,j)<- r.%(i,j) +. t1.%(i,k) *. t2.%(k,j)
               )
           )
       )
@@ -188,7 +160,7 @@ module Sparse = struct
   let trace t =
     let s = ref 0. in
     Shape.iter_on t.contr ( fun sh ->
-        s := !s +. t.(sh,sh)
+        s := !s +. t.%(sh,sh)
       )
   ; !s
 
@@ -196,7 +168,7 @@ module Sparse = struct
     let s = ref 0. in
     Shape.iter_on t1.contr ( fun contr ->
         Shape.iter_on t1.cov ( fun cov ->
-            s := !s +. t1.(contr,cov) *. t2.(cov,contr)
+            s := !s +. t1.%(contr,cov) *. t2.%(cov,contr)
           )
       )
   ; !s
@@ -205,19 +177,19 @@ module Sparse = struct
     let s = ref 0. in
     Shape.iter_on t1.contr ( fun contr ->
         Shape.iter_on t1.cov ( fun cov ->
-            s := !s +. t1.(contr,cov) *. t2.(contr,cov)
+            s := !s +. t1.%(contr,cov) *. t2.%(contr,cov)
           )
       )
   ; !s
 
   let map2 ( <+> ) t1 t2 =
     init_sh ~contr:t1.contr ~cov:t1.cov (fun contr cov ->
-        t1.(contr,cov) <+> t2.(contr,cov)
+        t1.%(contr,cov) <+> t2.%(contr,cov)
       )
 
   let scalar_map f t1 =
     init_sh ~contr:t1.contr ~cov:t1.cov
-      (fun contr cov -> f t1.(contr,cov))
+      (fun contr cov -> f t1.%(contr,cov))
 
 
 end
@@ -227,7 +199,7 @@ end
 module Full = struct
 
 let map2 ( <@> ) (t1:'sh t) (t2:'sh t) : 'sh t =
-  let array = A.mapi ( fun i x -> x <@> t2.array @? i ) t1.array in
+  let array = A.mapi ( fun i x -> x <@> t2.array.!(i) ) t1.array in
   { t1 with array }
 
 
@@ -246,7 +218,7 @@ let transpose: < contr:'left; cov:'right > t -> < contr:'right; cov:'left > t =
   let array = A.make (len t1) 0. in
   let () =
     iter_on (left ^ right ^ stop) (fun i j ->
-        t1.array % (i * right + j ) =: t1.array @? (j * right + i)
+        t1.array.!(i * right + j ) <- t1.array.!(j * right + i)
       ) in
   Unsafe.create ~contr:t1.cov ~cov:t1.contr array
 
@@ -261,9 +233,9 @@ let mult (t1: <contr:'left; cov:'mid> t) (t2: <contr:'mid; cov:'right> t) :
   iter_on (left_dim ^ middle_dim ^ right_dim ^ stop)
     ( fun i k j ->
         let pos = i * right_dim + j in
-        array % pos =:
-        (array @? pos) +.
-        (l @? i * middle_dim + k ) *. (r @? k * right_dim + j)
+        array.!(pos) <-
+        array.!(pos) +.
+        l.!(i * middle_dim + k ) *. r.!(k * right_dim + j)
     );
   Unsafe.create ~contr:t1.contr ~cov:t2.cov array
 
@@ -272,7 +244,7 @@ let trace (t1: <contr:'a; cov:'a> t ) =
   let size = contr_size t1 in
   let s = ref 0. in
   iter_on (size ^ stop) (fun i ->
-      s := !s +. (t1.array @? i + size * i)
+      s := !s +. t1.array.!(i + size * i)
     )
   ; !s
 
@@ -280,7 +252,7 @@ let full_contraction (t1: <contr:'a; cov:'b> t ) (t2: < contr:'b; cov:'a > t) =
   let left = contr_size t1 and right = cov_size t1 in
   let s = ref 0. in
   iter_on (left ^ right ^ stop) (fun i j ->
-      s := !s +. (t1.array @? i + left * j) *. (t2.array @? j + right * i)
+      s := !s +. t1.array.!(i + left * j) *. t2.array.!(j + right * i)
     )
   ; !s
 
@@ -288,7 +260,7 @@ let scalar_product (t1: 'sh t) (t2: 'sh t) =
   let l = len t1 in
   let s =ref 0. in
   for i = 0 to l - 1 do
-    s:= !s +. (t1.array @? i) *. (t2.array @? i)
+    s:= !s +. t1.array.! (i) *. t2.array.!(i)
   done
   ; !s
 
@@ -387,7 +359,7 @@ let up1: type left right dim tl tl2.
 let copy t =
   if is_sparse t then
   init_sh ~contr:t.contr ~cov:t.cov
-    ( fun i j -> t.(i,j) )
+    ( fun i j -> t.%(i,j) )
   else
     { t with array = A.copy t.array }
 
@@ -403,7 +375,7 @@ let partial_copy (type na a nb b nc c nd d)
     (fun sh2 sh2' ->
        Mask.iter_extended_dual (
          fun sh1 sh1' ->
-           tnew.(sh1,sh2) <- t.(sh1',sh2')
+           tnew.%(sh1,sh2) <- t.%(sh1',sh2')
        ) contr f1
     )  cov f2;
   tnew
@@ -418,20 +390,19 @@ let slice t (f1,f2) =
 let blit t t2 =
   Shape.iter ( fun sh' ->
       Shape.iter ( fun sh ->
-          t.(sh,sh')<- t2.(sh,sh')
+          t.%(sh,sh')<- t2.%(sh,sh')
         ) t.contr
     ) t.cov
 
 let partial_blit t (f1,f2) t2 =
   Mask.iter_masked_dual ( fun sh2 sh2' ->
       Mask.iter_masked_dual ( fun sh sh' ->
-          t.(sh,sh2) <- t2.(sh',sh2')
+          t.%(sh,sh2) <- t2.%(sh',sh2')
         ) t.contr f1
     ) t.cov f2
 
 
-let%indexop.stringlike get = slice
-and set = partial_blit
+let (.%[]) = slice and (.%[]<-) = partial_blit
 
 exception Break
 
@@ -441,36 +412,38 @@ let det ( mat : <contr:'a Shape.single; cov:'a Shape.single> t): float=
   let mat = copy mat in
   let sign = ref 1. in
   let perm = MA.ordinal dim in
-  let ( ! ) k = MA.(  perm.{k} ) in
+  let ( ! ) k = perm.MA.%([k]) in
   let swap i i' =
     if i <> i' then
       let tmp = !i in
       let open MA in
-      perm.{i} <- !i'
-    ; perm.{i'} <- tmp
+      perm.%([i]) <- !i'
+    ; perm.%([i']) <- tmp
     ; sign.contents<- -.sign.contents
   in
   let pivot j =
     let find_max (i,max) k =
-      let abs_k = abs_float mat.{ !k, j } in
+      let abs_k = abs_float mat.%([!k], [j] ) in
       if abs_k > max then (k,abs_k) else (i,max) in
-    let start = Nat.succ j and acc = j, abs mat.{!j,j} in
+    let start = Nat.succ j and acc = j, abs mat.%([!j], [j]) in
     let i, max  =
       Nat.partial_fold ~stop:dim ~start ~acc find_max in
     if max > 0. then swap j i else raise Break in
   let transl ?(start=0) ~from ~to_ coeff =
     Nat.partial_iter ~start ~stop:dim (fun j ->
-        mat.{!to_,j} <- mat.{!to_,j} +. coeff *. mat.{!from,j}
+        mat.%([!to_],[j]) <-
+          mat.%([!to_],[j]) +. coeff *. mat.%([!from],[j])
       )
   in
   try
     Nat.iter_on dim (fun i ->
     pivot i;
-    let c = mat.{!i,i} in
+    let c = mat.%([!i],[i]) in
     Nat.partial_iter ~start:(Nat.succ i) ~stop:dim
-      (fun to_ -> transl ~start:(Nat.to_int i) ~from:i ~to_ (-. mat.{!to_,i}/. c) )
+      (fun to_ -> transl ~start:(Nat.to_int i) ~from:i
+          ~to_ (-. mat.%([!to_],[i])/. c) )
       )
-  ; Nat.fold (fun p k -> p *. mat.{!k,k} ) sign.contents dim
+  ; Nat.fold (fun p k -> p *. mat.%([!k],[k])) sign.contents dim
   with Break -> 0.
 
 (** Given (n-1) vectors of dimension n, compute the normal to the hyperplane
@@ -484,7 +457,7 @@ let normal (array: 'dim vec array): 'dim vec =
   if nvec = 0 then raise @@
     Invalid_argument "Tensor.normal expects array of size >0";
   let open Shape in
-  let [dim] = (array @? 0).contr in
+  let [dim] = array.!(0).contr in
   let module Dyn = Nat.Dynamic(struct let dim = nvec end) in
   let open Nat_defs in
   match Nat.Sum.( Dyn.dim + _1 =? dim ) with
@@ -495,7 +468,7 @@ let normal (array: 'dim vec array): 'dim vec =
     let minor k = det @@ sq_matrix Dyn.dim (fun i j ->
         let offset =
           if Nat.( to_int i < to_int k) then _0p else _1p in
-        (array @? Nat.to_int j).{i %+% offset}
+        array.!(Nat.to_int j).%([i %+% offset], [])
       )
     in
     vector dim minor

@@ -12,8 +12,8 @@ end
 module type vec_operators=
 sig
   include base_operators
-  val get: 'a t -> 'a Nat.lt -> float [@@indexop.arraylike]
-  val set: 'a t -> 'a Nat.lt -> float -> unit [@@indexop.arraylike]
+  val (.%()): 'a t -> 'a Nat.lt -> float
+  val (.%()<-): 'a t -> 'a Nat.lt -> float -> unit
 end
 
 module type matrix_specific_operators = sig
@@ -35,10 +35,10 @@ sig
   val ( *. ) : float -> 'a t -> 'a t
   val ( /. ) : 'a t -> float -> 'a t
   val ( ~- ) : 'a t -> 'a t
-  val get: ('a*'b) t -> ('a Nat.lt * 'b Nat.lt) ->
-    float [@@indexop.arraylike]
-  val set:  ('a*'b) t -> ('a Nat.lt * 'b Nat.lt) ->
-    float -> unit [@@indexop.arraylike]
+  val ( .%() ): ('a*'b) t -> ('a Nat.lt * 'b Nat.lt) ->
+    float
+  val ( .%()<- ):  ('a*'b) t -> ('a Nat.lt * 'b Nat.lt) ->
+    float -> unit
 end
 
 module type tensor_operators =

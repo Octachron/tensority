@@ -1,4 +1,3 @@
-
 module V = Small_vec
 module M = Small_matrix
 module T = Tensor
@@ -8,7 +7,7 @@ type _ t =
     | Vec: 'a V.t -> < contr: 'a Shape.single; cov: Shape.empty > t
     | Matrix: ('a * 'b) M.t -> < contr:'a Shape.single; cov:'b Shape.single > t
 
-  let scalar f = Scalar f
+  let scalar f = Scalar (ref f)
   let vector n array = Vec(V.create n array)
   let matrix n m array = Matrix(M.create n m array)
 
@@ -71,28 +70,21 @@ type _ t =
 
   end
 
-  [%%indexop.arraylike
-    let get: type a b. <contr:a; cov:b> t -> (a Shape.lt * b Shape.lt)
-      -> float = fun t (contr,cov) ->
-      let open Shape in
-      match[@warning "-4"] t, contr, cov with
-      | Scalar f, [] , [] -> !f
-      | Vec v, [a], [] -> V.( v.(a) )
-      | Matrix m, [i], [j] -> M.( m.(i,j) )
-      | _ -> .
+let (.%()): type a b. <contr:a; cov:b> t -> (a Shape.lt * b Shape.lt)
+  -> float = fun t (contr,cov) ->
+  let open Shape in
+  match[@warning "-4"] t, contr, cov with
+  | Scalar f, [] , [] -> !f
+  | Vec v, [a], [] -> v.V.%(a)
+  | Matrix m, [i], [j] -> m.M.%(i,j)
+  | _ -> .
 
-    and set: type a b. <contr:a; cov:b> t -> (a Shape.lt * b Shape.lt) -> float -> unit
-      = fun t (contr,cov) x ->
-        let open Shape in
-        match[@warning "-4"] t, contr, cov with
-        | Scalar f, [] , [] -> f := x
-        | Vec v, [a] ,  [] -> V.( v.(a) <- x )
-        | Matrix m, [i], [j] -> M.( m.(i,j) <- x )
-        | _ -> .
-  ]
-
-  [%%indexop
-    let get_1 (Vec v) k = V.(v.(k)) and set_1 (Vec v) k x = V.( v.(k) <- x )
-    let get_2 (Matrix m) k l = M.(m.(k,l))
-    and set_2 (Matrix m) k l x = M.( m.(k,l) <- x )
-  ]
+and (.%()<-): type a b.
+  <contr:a; cov:b> t -> (a Shape.lt * b Shape.lt) -> float -> unit
+  = fun t (contr,cov) x ->
+    let open Shape in
+    match[@warning "-4"] t, contr, cov with
+    | Scalar f, [] , [] -> f := x
+    | Vec v, [a] ,  [] -> v.V.%(a) <- x
+    | Matrix m, [i], [j] -> m.M.%(i,j) <- x
+    | _ -> .

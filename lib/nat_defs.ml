@@ -78,7 +78,8 @@ module Shifter(K:sig type m end) = struct
 
   type ('x,'fx,'aux) f  = ('x,'fx,'aux,nz) f_gen
   type ('x,'fx,'aux) f0  = ('x,'fx,'aux,z) f_gen
-      (**)
+
+  (**)
   let _9 : ('a * 'd, [< `_9 of 'a | ('d,_) s Lep._8 ], _ ) f =
     fun x -> shift 9 x
   let _8 : ('a * 'd, [< `_8 of 'a | 'd Gtp._9 | ('d,_) s Lep._7 ], _ ) f =

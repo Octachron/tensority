@@ -13,12 +13,11 @@
 
    At the predicate level,  it is useful to define the partial order [(≺)]
    over fixed-size list defined by
-   {
+   {[
    [ let rec (≺) l l' = match l, l' with
    | a :: q, b :: q' -> a < b && q ≺ q'
    | [], [] -> true
-   ]
-   }
+   ]}
 
    This module then implements two types of predicates:
 

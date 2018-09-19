@@ -33,6 +33,7 @@ type ('d1, 'd2, 'd3) t3 =
   < contr : ('d1, 'd2) Shape.pair; cov : 'd3 Shape.single > t
 
 (** {2 Printing} *)
+
 (** Pretty-printer for tensor *)
 val pp : Format.formatter -> < contr : 'a; cov : 'b > t -> unit
 
@@ -40,45 +41,24 @@ val pp : Format.formatter -> < contr : 'a; cov : 'b > t -> unit
 val show : < contr : 'a; cov : 'b > t -> string
 
 (** {2 Access operators} *)
+
 (** tensor access:
     with ppx_tensority: [ t.(i_1, ..., i_n; j_1, ..., j_n) ]
     without ppx [ t.([i_1;...;i_n], [j_1;...,j_n]) ]
 *)
-val get: < contr : 'a; cov : 'b > t -> 'a Shape.lt * 'b Shape.lt -> float
+val (.%()): < contr : 'a; cov : 'b > t -> 'a Shape.lt * 'b Shape.lt -> float
   [@@indexop.arraylike]
 
 (** tensor access:
-    with ppx_tensority: [ t.(i_1, ..., i_n; j_1, ..., j_n) <- x ]
-    without ppx [ t.([i_1;...;i_n], [j_1;...,j_n]) <- x ]
+    with ppx_tensority: [ t.%(i_1, ..., i_n; j_1, ..., j_n) <- x ]
+    without ppx [ t.%([i_1;...;i_n], [j_1;...,j_n]) <- x ]
 *)
-val set: < contr : 'a; cov : 'b > t -> 'a Shape.lt * 'b Shape.lt -> float -> unit
+val (.%()<-):
+  < contr : 'a; cov : 'b > t -> 'a Shape.lt * 'b Shape.lt -> float -> unit
   [@@indexop.arraylike]
 
-(** {3 Specialized access operator for vector, matrix and standard 3-tensor} *)
-
-val get : 'a vec -> 'a Nat.lt -> float
-  [@@indexop]
-
-val get_2 : ('a, 'b) matrix -> 'a Nat.lt -> 'b Nat.lt -> float
-  [@@indexop]
-
-
-val get_3 :
-  ('a, 'b, 'c) t3 -> 'a Nat.lt -> 'b Nat.lt -> 'c Nat.lt -> float
-  [@@indexop]
-
-val set : 'a vec -> 'a Nat.lt -> float -> unit
-  [@@indexop]
-
-val set_2 : ('a, 'b) matrix -> 'a Nat.lt -> 'b Nat.lt -> float -> unit
-  [@@indexop]
-
-val set_3 :
-  ('a, 'b, 'c) t3 -> 'a Nat.lt -> 'b Nat.lt -> 'c Nat.lt -> float -> unit
-  [@@indexop]
-
-
 (** {2 Shape functions} *)
+
 (** total size of the covariant dimensions *)
 val cov_size : < contr : 'a; cov : 'b > t -> int
 
@@ -123,16 +103,16 @@ val const :
 val zero : contr:'a Shape.eq -> cov:'b Shape.eq -> < contr : 'a; cov : 'b > t
 
 (** [init_sh f sh1 sh2] creates a tensor [ t ] such
-    that for all s≺sh1 and s2≺sh2 [ t.(s,s2) = f s s2
+    that for all s≺sh1 and s2≺sh2 [ t.(s,s2) = f s s2 ]
 *)
 val init_sh :
   ('a Shape.lt -> 'b Shape.lt -> float) ->
   contr:'a Shape.eq -> cov:'b Shape.eq -> < contr : 'a; cov : 'b > t
 
-(** [vector n f] computes the n vector [ v_{i} = f i } *)
+(** [vector n f] computes the n vector [ v_{i} = f i ] *)
 val vector : 'a Nat.eq -> ('a Nat.lt -> float) -> 'a vec
 
-(** [matrix k l f] computes the k×l matrix [ m_{i,j} = f i j } *)
+(** [matrix k l f] computes the k×l matrix [ m_{i,j} = f i j ] *)
 val matrix :
   'a Nat.eq -> 'b Nat.eq -> ('a Nat.lt -> 'b Nat.lt -> float) -> ('a, 'b) matrix
 
@@ -143,7 +123,7 @@ val sq_matrix :
 (** copy a tensor *)
 val copy : < contr : 'a; cov : 'b > t -> < contr : 'a; cov : 'b > t
 
-(** {2 Reshaping and indice manipulation *)
+(** {2 Reshaping and indice manipulation} *)
 val reshape :
   < contr : 'a; cov : 'b > t ->
   'c Shape.eq * 'd Shape.eq -> < contr : 'c; cov : 'd > t
@@ -179,13 +159,13 @@ val mult :
 
 
 (** Contract a (d,d) tensor with itself
-    [trace t =  ∑_{s≺d} t.(s,s)
+    [trace t =  ∑_{s≺d} t.(s,s)]
  *)
 val trace :
   < contr : 'a; cov : 'a > t -> float
 
 (** Fully contracts two tensors to obtains a scalar
-    [full contraction a b = trace (mult a b)
+    [full contraction a b = trace (mult a b)]
  *)
 val full_contraction :
   < contr : 'a; cov : 'b > t -> < contr : 'b; cov : 'a > t -> float
@@ -237,17 +217,15 @@ val partial_blit :
   ('a, 'c) Mask.s_to_eq * ('b, 'd) Mask.s_to_eq ->
   < contr : 'c; cov : 'd > t -> unit
 
-val get :
+val (.%[]) :
   < contr : 'a; cov : 'b > t ->
   ('a, 'c) Mask.t * ('b, 'd) Mask.t ->
   < contr : 'c; cov : 'd > t
-  [@@indexop.stringlike]
 
-val set :
+val (.%[]<-) :
   < contr : 'a; cov : 'b > t ->
   ('a, 'c) Mask.s_to_eq * ('b, 'd) Mask.s_to_eq ->
   < contr : 'c; cov : 'd > t -> unit
-  [@@indexop.stringlike]
 
 val det : < contr : 'a Shape.single; cov : 'a Shape.single > t -> float
 val normal : 'dim vec array -> 'dim vec

@@ -30,7 +30,7 @@ let ( % ) f g =
 let first s = s.translation
 let translation s = { s with linear = 1 }
 
-let%indexop.stringlike get stencil n =
+let (.%[] ) stencil n =
   stencil.translation + n * stencil.linear
 
 let id = { linear = 1; translation = 0 }

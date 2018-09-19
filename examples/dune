@@ -1,0 +1,13 @@
+(executable
+  (name linalg)
+  (modules Linalg)
+  (libraries tensority)
+  (preprocess (pps tensority_ppx))
+)
+
+(executable
+  (name ma)
+  (modules Ma)
+  (libraries tensority)
+  (preprocess (pps tensority_ppx))
+)

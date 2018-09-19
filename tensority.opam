@@ -1,0 +1,11 @@
+opam-version: "2.0"
+name: "tensority"
+version: "0.1"
+maintainer: "octachron <octa@polychoron.fr>"
+authors:"octachron <octa@polychoron.fr>"
+homepage: "https://github.com/Octachron/tensority"
+dev-repo: "git+https://github.com/Octachron/tensority.git"
+bug-reports: "https://github.com/Octachron/tensority/issues"
+license: "GPL 3+"
+build: ["dune" "build" "-p" name ]
+depends: [ "dune" {build} ]
