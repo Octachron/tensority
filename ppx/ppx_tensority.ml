@@ -36,10 +36,13 @@ module Polyvar = struct
   ; conjunction: core_type list
   }
 
-  let tag  ?(empty_type=false) ?(conjunction=[]) ?(attributes=[]) label =
-    Rtag (label, attributes, empty_type, conjunction )
+  let tag ~loc  ?(empty_type=false) ?(conjunction=[]) label =
+    { prf_desc = Rtag (label, empty_type, conjunction );
+      prf_attributes = [];
+      prf_loc = loc;
+    }
 
-  let set typ = Rinherit typ
+  let set ~loc typ = { prf_desc = Rinherit typ; prf_attributes = []; prf_loc = loc }
 
   type simple_var = core_type list
 
@@ -47,6 +50,7 @@ module Polyvar = struct
     {
       ptyp_desc = Ptyp_variant (upper_bound, closed, lower_bound_opt)
     ; ptyp_loc = loc
+    ; ptyp_loc_stack = []
     ; ptyp_attributes = []
     }
 
@@ -91,7 +95,7 @@ module Ints = struct
 
 let to_label n = "_" ^ string_of_int n
 
-let t loc = Polyvar.tag ~empty_type:true (Loc.make ~loc "T")
+let t loc = Polyvar.tag ~loc ~empty_type:true (Loc.make ~loc "T")
 let eq loc = [%type: [`Eq] ]
 let lt loc = [%type: [`Lt] ]
 let le loc = [%type: [`Lt|`Eq] ]
@@ -110,7 +114,7 @@ end
 
   (* a digit [k] followed by [t] *)
 let digit ~loc k t =
-  Polyvar.tag ~conjunction:[t] (Loc.make ~loc @@ to_label k)
+  Polyvar.tag ~loc ~conjunction:[t] (Loc.make ~loc @@ to_label k)
 
   (* number of digits *)
   let size n = int_of_float @@ log10 @@ float n
@@ -160,13 +164,13 @@ let digit ~loc k t =
     let all loc t = gtp loc 0 t
     let ending loc =
       let open Polyvar in
-      var loc [t loc; set @@ all loc @@ T.any () ]
+      var loc [t loc; set ~loc @@ all loc @@ T.any () ]
 
     let rec digits loc k = if k = 0 then
         ending loc
       else
         let open Polyvar in
-        var_low loc [ set @@ all loc (digits loc @@ k - 1) ]
+        var_low loc [ set ~loc @@ all loc (digits loc @@ k - 1) ]
   end
 
   module L = struct
@@ -177,12 +181,12 @@ let digit ~loc k t =
         let open Polyvar in
         let l = [ digit ~loc d inner ] in
         let l =  if d<9 then
-            (set @@ gtp loc (d+1) @@ digits loc len ) :: l
+            (set ~loc @@ gtp loc (d+1) @@ digits loc len ) :: l
           else
             l
         in
         if d > 0 then
-          var loc @@ set (lep loc (d-1) @@ digits loc @@ 1 + len) :: l
+          var loc @@ set ~loc (lep loc (d-1) @@ digits loc @@ 1 + len) :: l
         else
           var_low loc l
       in
@@ -203,7 +207,7 @@ let digit ~loc k t =
           ending loc
         else
           let open Polyvar in
-          L.int_aux loc k 0 (var_low loc [ set @@ all loc @@ ending loc ] )
+          L.int_aux loc k 0 (var_low loc [ set ~loc @@ all loc @@ ending loc ] )
     end
 
     let int loc k =
@@ -222,7 +226,7 @@ let digit ~loc k t =
           ending loc
         else
           let open Polyvar in
-          L.int_aux loc k 0 (var_low loc [ set @@ ending loc ] )
+          L.int_aux loc k 0 (var_low loc [ set ~loc @@ ending loc ] )
     end
 
     let int loc k =
