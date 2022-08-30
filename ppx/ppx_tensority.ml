@@ -272,16 +272,34 @@ module Index_rewriter = struct
     | [a] -> inner a
     | l -> H.Exp.tuple ~loc:seq.pexp_loc (List.map inner l)
 
+  let array inner = function
+    | { pexp_desc = Pexp_array l; _ } as a ->
+      H.Exp.tuple ~loc:a.pexp_loc (List.map inner l)
+    | a ->
+      error a.pexp_loc "[.!(;..)] expected an array literal as index"
+
+
   let simple x = seq tuples x
   let all =
-  function
-  | [%expr [%e? i ]; __ ] ->
-    let loc = i.pexp_loc in
-    [%expr [%e tuples i], []]
-  | [%expr __ ; [%e? i ] ] ->
-    let loc = i.pexp_loc in
-    [%expr [], [%e tuples i]]
-  | e -> simple e
+    function
+    | [%expr [%e? i ]; __ ] ->
+      let loc = i.pexp_loc in
+      [%expr [%e tuples i], []]
+    | [%expr __ ; [%e? i ] ] ->
+      let loc = i.pexp_loc in
+      [%expr [], [%e tuples i]]
+    | e -> simple e
+
+  let all_array =
+    function
+    | [%expr [| [%e? i ]; __ |] ] ->
+      let loc = i.pexp_loc in
+      [%expr [ [%e tuples i], [] ] ]
+    | [%expr [|  __ ; [%e? i ] |] ] ->
+      let loc = i.pexp_loc in
+      [%expr [ [], [%e tuples i] ] ]
+    | e -> array tuples e
+
 
 end
 
@@ -501,14 +519,26 @@ module Index = struct
 
   let slice =
     Context_free.Rule.special_function
-      "String.get"
+      "(.!())"
         (function
-        | [%expr [%e? a].[ [%e? i] ] ] as e ->
+        | [%expr [%e? a].!( [%e? i] ) ] as e ->
           let loc = e.pexp_loc in
           let i = Index_rewriter.all i in
           Some [%expr [%e a].%[ Tensority.Mask.( [%e i] )] ]
         | _ -> None
         )
+
+  let slice_bis =
+    Context_free.Rule.special_function
+      "(.!(;..))"
+      (function
+        | [%expr (.!(;..)) [%e? a]  [%e? i] ] as e ->
+          let loc = e.pexp_loc in
+          let i = Index_rewriter.all_array i in
+          Some [%expr [%e a].%[ Tensority.Mask.( [%e i] )] ]
+        | _ -> None
+      )
+
 
   let access =
     Context_free.Rule.special_function
@@ -523,11 +553,22 @@ module Index = struct
 
   let blit =
     Context_free.Rule.special_function
-      "String.set"
+      "(.!()<-)"
       (function
-        | [%expr [%e? a].[[%e? i] ] <- [%e? v] ] as e ->
+        | [%expr [%e? a].!([%e? i] ) <- [%e? v] ] as e ->
           let loc = e.pexp_loc in
           let i = Index_rewriter.all i in
+          Some [%expr [%e a].%[Tensority.Mask.([%e i])]<- [%e v] ]
+        | _ -> None
+      )
+
+  let blit_bis =
+    Context_free.Rule.special_function
+      "(.!(;..)<-)"
+      (function
+        | [%expr (.!(;..)<-) [%e? a] [%e? i] [%e? v] ] as e ->
+          let loc = e.pexp_loc in
+          let i = Index_rewriter.all_array i in
           Some [%expr [%e a].%[Tensority.Mask.([%e i])]<- [%e v] ]
         | _ -> None
       )
@@ -544,7 +585,7 @@ module Index = struct
       )
 
 
-  let rules = [slice; blit; access; assign]
+  let rules = [slice; slice_bis; blit; blit_bis; access; assign]
 
 end
 

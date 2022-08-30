@@ -54,20 +54,18 @@ let one = array4.( 1i, 5i, 0i, 1i ) ;;
 array4.(0i,0i,0i,0i) <- 0;;
 
 (* slicing *)
-let matrix = array4.[ All, All, 1j, 1j ];;
+let matrix = array4.!( All, All, 1j, 1j );;
 (* matrix is [9, 1; 2, 3] *)
 
 (* slice assignment *)
 let row = [%array (2,3) ];;
-matrix.[All, 0j] <- row;;
+matrix.!(All, 0j) <- row;;
 (* matrix is now [2, 3; 2, 3] *)
 
 (* range slice *)
-let array' = array.[[%range 25 50 ~by:5]]
+let array' = array.!([%range 25 50 ~by:5])
 (* or *)
-let array' = array.[ 25 #-># 50 ## 5]
-
-
+let array' = array.!( 25 #-># 50 ## 5 )
 ```
 
 ### Examples without ppx
@@ -92,27 +90,27 @@ let array = init_sh Size.[nat _5 @ _0 @ _2 @ _1 @ _0 @ _3n]
   (function [k] -> Nat.to_int k)
 
 (* accessing an element *)
-let one = array4.( [ _1i; _0i; _0i; _0i] ) ;;
+let one = array4.%( [ _1i; _0i; _0i; _0i] ) ;;
 
 (* accessing an element with an out-of-bound type error *)
-let one = array4.([ _1i; _5i; _0i; _1i ] ) ;;
+let one = array4.%([ _1i; _5i; _0i; _1i ] ) ;;
 
 (* element assignment *)
-array4.([ _0i; _0i; _0i; _0i ]) <- 0;;
+array4.%([ _0i; _0i; _0i; _0i ]) <- 0;;
 
 (* slicing *)
-let matrix = array4.[[ All; All; Elt _1i;  Elt _1i ]];;
+let matrix = array4.%[[ All; All; Elt _1i;  Elt _1i ]];;
 (* matrix is [9, 1; 2, 3] *)
 
 (* slice assignment *)
 let row = Unsafe.create [_2] [| 2; 3 |];;
-matrix.[[ All; Elt _0i]] <- row
+matrix.%[[ All; Elt _0i]] <- row
 (* matrix is now [2, 3; 2, 3] *)
 
 (* range slice *)
 let r= Range.create ~by: 5 ~start:Indices.(nat _2 @ 5n)
   ~stop:Indices.(nat _5 @ 0n) ~len:_10
 
-let array' = array.[[Range r]]
+let array' = array.%[[Range r]]
 
 ```

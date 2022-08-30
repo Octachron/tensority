@@ -8,7 +8,7 @@ let rotation theta =
   ]
 
 let m = rotation 1.
-let c1 = m.[ All; 1j ]
+let c1 = m.!( All; 1j )
 let one = [%vec ( 1., 1. ) ]
 
 let d = det @@ rotation 0.95
