@@ -47,7 +47,6 @@ val show : < contr : 'a; cov : 'b > t -> string
     without ppx [ t.([i_1;...;i_n], [j_1;...,j_n]) ]
 *)
 val (.%()): < contr : 'a; cov : 'b > t -> 'a Shape.lt * 'b Shape.lt -> float
-  [@@indexop.arraylike]
 
 (** tensor access:
     with ppx_tensority: [ t.%(i_1, ..., i_n; j_1, ..., j_n) <- x ]
@@ -55,7 +54,6 @@ val (.%()): < contr : 'a; cov : 'b > t -> 'a Shape.lt * 'b Shape.lt -> float
 *)
 val (.%()<-):
   < contr : 'a; cov : 'b > t -> 'a Shape.lt * 'b Shape.lt -> float -> unit
-  [@@indexop.arraylike]
 
 (** {2 Shape functions} *)
 
